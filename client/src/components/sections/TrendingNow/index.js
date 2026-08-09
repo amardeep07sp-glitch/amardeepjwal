@@ -1,0 +1,1 @@
+export { TrendingNow } from './TrendingNow';

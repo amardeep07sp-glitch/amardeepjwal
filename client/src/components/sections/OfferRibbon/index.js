@@ -1,0 +1,1 @@
+export { OfferRibbon } from './OfferRibbon';

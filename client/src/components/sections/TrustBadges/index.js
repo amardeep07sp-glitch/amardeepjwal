@@ -1,0 +1,1 @@
+export { TrustBadges } from './TrustBadges';

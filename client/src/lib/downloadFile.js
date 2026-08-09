@@ -1,0 +1,41 @@
+import { useAuthStore } from '@/store/authStore';
+
+const BASE_URL = '/api/v1';
+
+// Streams a file response (the invoice PDF today) and triggers a browser
+// download. Kept separate from api.js's request() since that helper always
+// assumes a JSON body - a file download never has one. Same shape as the
+// admin ERP's own lib/downloadFile.js, not a from-scratch design.
+export async function downloadFile(path, { filename } = {}) {
+  const accessToken = useAuthStore.getState().accessToken;
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+  });
+
+  if (!res.ok) {
+    let message = 'Download failed';
+    try {
+      const data = await res.json();
+      message = data?.message || message;
+    } catch {
+      // Response wasn't JSON - keep the generic message.
+    }
+    throw new Error(message);
+  }
+
+  const blob = await res.blob();
+  const disposition = res.headers.get('content-disposition');
+  const match = disposition?.match(/filename="?([^"]+)"?/);
+  const resolvedFilename = filename || match?.[1] || 'download';
+
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = resolvedFilename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
