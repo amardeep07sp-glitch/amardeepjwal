@@ -1,17 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { CheckCircle2, Gem, Lock } from 'lucide-react';
+import { CheckCircle2, Gem, Lock, ArrowRight } from 'lucide-react';
 import { useResetPassword } from '@/features/auth/authApi';
-import { PageContainer } from '@/components/global/PageContainer';
-import { Card, CardContent } from '@/components/ui/card';
 import { PasswordInput } from '@/components/ui/password-input';
-import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/global/EmptyState';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-// Reads email+token from the emailed link's query string
-// (auth.service.js#requestPasswordReset builds this exact URL) - never
-// asks the visitor to paste/retype either one.
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email') ?? '';
@@ -25,16 +20,16 @@ export default function ResetPasswordPage() {
 
   if (!email || !token) {
     return (
-      <PageContainer top="md" bottom="md">
-        <div className="mx-auto max-w-md">
+      <div className="flex w-full justify-center px-4">
+        <div className="w-full max-w-md">
           <EmptyState
             title="Invalid reset link"
-            description="This password reset link is missing information. Please request a new one."
+            description="This password reset link is missing information or has expired. Please request a new one."
             actionLabel="Request New Link"
             onAction={() => navigate('/forgot-password')}
           />
         </div>
-      </PageContainer>
+      </div>
     );
   }
 
@@ -45,75 +40,128 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="relative overflow-hidden bg-secondary/40">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-luxury opacity-[0.08]" />
-      <PageContainer top="md" bottom="md" className="relative flex justify-center">
-        <div className="w-full max-w-md">
-          <Card className="w-full gap-0 pt-0 ring-foreground/5 shadow-luxury">
-            <div className="h-1.5 w-full shrink-0 bg-gradient-luxury" />
-            <CardContent className="flex flex-col gap-6 px-6 py-6 sm:px-8 sm:py-8">
-              {resetPassword.isSuccess ? (
-                <div className="flex flex-col items-center gap-3 py-4 text-center">
-                  <CheckCircle2 className="size-10 text-success" />
-                  <h1 className="font-display text-h3 font-bold text-heading">Password reset</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Your password has been changed. You've been signed out everywhere - please log in again with your new password.
-                  </p>
-                  <Button variant="luxury" shape="pill" className="mt-2" onClick={() => navigate('/login')}>
-                    Go to Sign In
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <div className="flex flex-col items-center gap-2.5 text-center">
-                    <h1 className="font-display text-h2 leading-tight font-bold tracking-tight text-heading">Reset Password</h1>
-                    <p className="max-w-xs text-sm text-muted-foreground">Choose a new password for {email}.</p>
-                    <span className="mt-1 flex items-center gap-3 text-primary">
-                      <span className="h-px w-10 bg-primary/40" />
-                      <Gem className="size-4" />
-                      <span className="h-px w-10 bg-primary/40" />
-                    </span>
-                  </div>
+    <div className="relative flex w-full justify-center px-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="relative w-full max-w-[430px]"
+      >
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-amber-900/10 bg-white shadow-[0_15px_45px_-10px_rgba(200,162,74,0.12),0_4px_16px_rgba(0,0,0,0.03)] backdrop-blur-md">
+          <div className="h-1.5 w-full bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27]" />
 
-                  <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                    <div className="relative">
-                      <Lock className="pointer-events-none absolute top-1/2 left-4 size-4.5 -translate-y-1/2 text-muted-foreground" />
+          <div className="flex flex-col gap-6 p-6 sm:p-8">
+            {resetPassword.isSuccess ? (
+              <div className="flex flex-col items-center gap-3 py-4 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
+                  <CheckCircle2 className="size-6" />
+                </div>
+                <h1 className="font-display text-2xl font-bold tracking-tight text-[#1E0508]">Password Reset Complete</h1>
+                <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">
+                  Your password has been changed successfully. You have been signed out everywhere — please sign in with your new password.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/login')}
+                  className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#C8A24A] via-[#DFBF6A] to-[#B48A2C] px-6 text-sm font-semibold text-zinc-950 shadow-[0_4px_16px_rgba(200,162,74,0.28)] transition-all duration-200 hover:brightness-105 hover:shadow-[0_6px_22px_rgba(200,162,74,0.4)] active:scale-[0.98] cursor-pointer"
+                >
+                  <span>Go to Sign In</span>
+                  <ArrowRight className="size-4" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <span className="text-[11px] font-semibold tracking-[0.2em] text-[#B48A2C] uppercase">
+                    Security Update
+                  </span>
+                  <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#1E0508]">
+                    Reset Password
+                  </h1>
+                  <p className="max-w-xs text-xs text-zinc-500">
+                    Choose a strong new password for <span className="font-medium text-zinc-800">{email}</span>.
+                  </p>
+                  
+                  <div className="flex items-center gap-2 text-[#C8A24A] pt-0.5">
+                    <span className="h-px w-8 bg-[#C8A24A]/30" />
+                    <Gem className="size-3.5" />
+                    <span className="h-px w-8 bg-[#C8A24A]/30" />
+                  </div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-zinc-600">New Password</label>
+                    <div className="relative group">
+                      <div className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-zinc-400 group-focus-within:text-[#C8A24A] transition-colors">
+                        <Lock className="size-4.5" />
+                      </div>
                       <PasswordInput
-                        className="pl-11"
-                        placeholder="New Password"
+                        className="pl-11 h-11 sm:h-12 rounded-xl bg-white border-zinc-200/80 focus:border-[#C8A24A] focus:ring-4 focus:ring-[#C8A24A]/15"
+                        placeholder="••••••••••••"
                         required
                         minLength={8}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                       />
                     </div>
-                    <div className="relative">
-                      <Lock className="pointer-events-none absolute top-1/2 left-4 size-4.5 -translate-y-1/2 text-muted-foreground" />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-zinc-600">Confirm New Password</label>
+                    <div className="relative group">
+                      <div className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-zinc-400 group-focus-within:text-[#C8A24A] transition-colors">
+                        <Lock className="size-4.5" />
+                      </div>
                       <PasswordInput
-                        className={cn('pl-11', !passwordsMatch && 'border-destructive')}
-                        placeholder="Confirm New Password"
+                        className={cn(
+                          'pl-11 h-11 sm:h-12 rounded-xl bg-white border-zinc-200/80 focus:border-[#C8A24A] focus:ring-4 focus:ring-[#C8A24A]/15',
+                          !passwordsMatch && 'border-red-500 ring-2 ring-red-500/20'
+                        )}
+                        placeholder="••••••••••••"
                         required
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                       />
                     </div>
-                    {!passwordsMatch && <p className="-mt-2 text-xs text-destructive">Passwords don't match</p>}
+                    {!passwordsMatch && (
+                      <p className="text-xs text-red-500 font-medium">Passwords do not match</p>
+                    )}
+                  </div>
 
-                    {resetPassword.isError && <p className="text-sm text-destructive">{resetPassword.error.message}</p>}
+                  {resetPassword.isError && (
+                    <p className="text-xs text-red-500 font-medium">{resetPassword.error.message}</p>
+                  )}
 
-                    <Button type="submit" variant="luxury" size="xl" shape="pill" loading={resetPassword.isPending} disabled={!passwordsMatch}>
-                      Reset Password
-                    </Button>
-                    <Link to="/login" className="text-center text-sm font-medium text-primary hover:underline">
+                  <button
+                    type="submit"
+                    disabled={resetPassword.isPending || !passwordsMatch}
+                    className="group relative flex h-11 sm:h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#C8A24A] via-[#DFBF6A] to-[#B48A2C] px-6 text-sm font-semibold text-zinc-950 shadow-[0_4px_16px_rgba(200,162,74,0.28)] transition-all duration-200 hover:brightness-105 hover:shadow-[0_6px_22px_rgba(200,162,74,0.4)] active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+                  >
+                    {resetPassword.isPending ? (
+                      <span>Updating password...</span>
+                    ) : (
+                      <>
+                        <span>Reset Password</span>
+                        <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                      </>
+                    )}
+                  </button>
+
+                  <div className="text-center pt-1">
+                    <Link
+                      to="/login"
+                      className="text-xs font-medium text-zinc-500 hover:text-[#B48A2C] transition-colors"
+                    >
                       Back to Sign In
                     </Link>
-                  </form>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                  </div>
+                </form>
+              </>
+            )}
+          </div>
         </div>
-      </PageContainer>
+      </motion.div>
     </div>
   );
 }

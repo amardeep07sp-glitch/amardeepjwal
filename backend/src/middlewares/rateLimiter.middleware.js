@@ -49,6 +49,18 @@ export const eventLimiter = rateLimit({
 // dedicated ceiling here (not a replacement for apiLimiter, stacks under
 // it) makes it hard to accidentally (or maliciously, from a compromised
 // admin session) spam the entire customer base.
+// Signup OTP send/resend - each call sends a real email, so this needs a
+// much tighter ceiling than authLimiter's general 20/15min (which still
+// covers login/reset attempts on this same router) - otherwise a scripted
+// loop could cheaply spam an inbox or burn through the Resend quota.
+export const otpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, statusCode: 429, message: 'Too many code requests, please try again later.' },
+});
+
 export const broadcastLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 10,

@@ -18,11 +18,28 @@ export const listStaffUsersQuerySchema = z.object({
   }),
 });
 
-export const registerSchema = z.object({
+// Real Indian 10-digit mobile format (starts 6-9) - same shape the
+// storefront's own support/contact phone numbers already follow.
+const phoneSchema = z.string().trim().regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number');
+
+export const startRegistrationSchema = z.object({
   body: z.object({
-    name: z.string().min(2, 'Name must be at least 2 characters'),
-    email: z.string().email('Invalid email address'),
-    phone: z.string().optional(),
+    phone: phoneSchema,
+    email: z.string().trim().email('Invalid email address'),
+  }),
+});
+
+export const resendRegistrationOtpSchema = z.object({
+  body: z.object({
+    email: z.string().trim().email('Invalid email address'),
+  }),
+});
+
+export const completeRegistrationSchema = z.object({
+  body: z.object({
+    email: z.string().trim().email('Invalid email address'),
+    otp: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code'),
+    name: z.string().trim().min(2, 'Name must be at least 2 characters'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
   }),
 });

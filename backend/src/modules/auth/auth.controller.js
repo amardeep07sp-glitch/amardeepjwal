@@ -32,8 +32,18 @@ const sendAuthResponse = (req, res, statusCode, { user, accessToken, refreshToke
   res.status(statusCode).json(new ApiResponse(statusCode, { user, accessToken }, message));
 };
 
+export const startRegistration = asyncHandler(async (req, res) => {
+  await authService.startRegistration(req.body);
+  res.status(200).json(new ApiResponse(200, null, 'Verification code sent to your email'));
+});
+
+export const resendRegistrationOtp = asyncHandler(async (req, res) => {
+  await authService.resendRegistrationOtp(req.body.email);
+  res.status(200).json(new ApiResponse(200, null, 'Verification code resent'));
+});
+
 export const register = asyncHandler(async (req, res) => {
-  const result = await authService.register(req.body);
+  const result = await authService.completeRegistration(req.body);
   sendAuthResponse(req, res, 201, result, 'Account created successfully');
 });
 

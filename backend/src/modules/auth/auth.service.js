@@ -8,6 +8,7 @@ import {
   verifyRefreshToken,
 } from '../../utils/generateTokens.js';
 import { userRepository } from './auth.repository.js';
+import { registrationOtpRepository } from './registrationOtp.repository.js';
 import { storefrontService } from '../storefront/storefront.service.js';
 import { notificationSender } from '../shared/notification.sender.js';
 import { env } from '../../config/env.js';
@@ -22,6 +23,16 @@ const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
 const RESET_TOKEN_TTL_MS = 30 * 60 * 1000; // 30 minutes - short-lived on purpose
 const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+// Signup email verification - mobile number, then email, then a 6-digit
+// code emailed to that address, then name+password (see AuthPage.jsx's
+// multi-step SignUpForm). Only email gets an OTP: this store has no SMS/
+// WhatsApp OTP provider configured (see apikey.todo) - phone is collected
+// as a real contact field, not verified at signup, same as it always was.
+const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const MAX_OTP_ATTEMPTS = 5;
+const hashOtp = (otp) => crypto.createHash('sha256').update(otp).digest('hex');
+const generateOtp = () => String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
 
 // This route only ever registers role=customer (auth.model.js's own
 // default - staff accounts are provisioned separately, by an admin, never
@@ -52,14 +63,79 @@ const issueTokens = async (user) => {
   return { accessToken, refreshToken };
 };
 
+async function assertNotAlreadyRegistered(email, phone) {
+  const [byEmail, byPhone] = await Promise.all([userRepository.findByEmail(email), userRepository.findByPhone(phone)]);
+  if (byEmail) throw new ApiError(409, 'An account with this email already exists. Please log in instead.');
+  if (byPhone) throw new ApiError(409, 'An account with this mobile number already exists. Please log in instead.');
+}
+
+async function sendRegistrationOtpEmail(email, phone) {
+  const otp = generateOtp();
+  await registrationOtpRepository.upsert(email, {
+    phone,
+    otpHash: hashOtp(otp),
+    otpExpires: new Date(Date.now() + OTP_TTL_MS),
+  });
+
+  const result = await notificationSender.sendEmail(
+    email,
+    'Your verification code',
+    `<p>Your verification code is:</p>
+     <p style="font-size:28px;font-weight:700;letter-spacing:4px;">${otp}</p>
+     <p>This code expires in 10 minutes. If you didn't request this, you can safely ignore this email.</p>`
+  );
+  // Unlike password reset's silent-always-succeed contract (that one
+  // guards against email enumeration), there's no such concern here - the
+  // visitor already told us this email themselves, on this same signup
+  // form. If the email genuinely can't be sent, they have no way to
+  // continue, so this surfaces as a real error instead of a fake success.
+  if (!result.sent) {
+    logger.warn({ email, reason: result.reason }, 'Registration OTP email not sent (RESEND_API_KEY likely unset - see apikey.todo)');
+    throw new ApiError(503, 'Could not send the verification email right now. Please try again in a moment.');
+  }
+}
+
 export const authService = {
-  async register(data) {
-    const existing = await userRepository.findByEmail(data.email);
-    if (existing) {
-      throw new ApiError(409, 'An account with this email already exists');
+  // Step 1+2 of signup (mobile, then email) - collects both, emails a
+  // fresh OTP. Re-callable for the same email (e.g. the visitor mistyped
+  // and corrected it) - upsert replaces any still-pending attempt.
+  async startRegistration({ phone, email }) {
+    await assertNotAlreadyRegistered(email, phone);
+    await sendRegistrationOtpEmail(email, phone);
+  },
+
+  // "Resend code" on the OTP step - the pending attempt must already
+  // exist (started via startRegistration); this doesn't accept a new
+  // phone number, only re-sends to the same email.
+  async resendRegistrationOtp(email) {
+    const pending = await registrationOtpRepository.findByEmail(email);
+    if (!pending) throw new ApiError(400, 'Your verification session has expired. Please start over.');
+    await assertNotAlreadyRegistered(email, pending.phone);
+    await sendRegistrationOtpEmail(email, pending.phone);
+  },
+
+  // Final step - real OTP check, then the actual account gets created.
+  // Nothing about this account exists anywhere until this call succeeds.
+  async completeRegistration({ email, otp, name, password }) {
+    const pending = await registrationOtpRepository.findByEmail(email);
+    if (!pending || pending.otpExpires < new Date()) {
+      throw new ApiError(400, 'This code has expired. Please request a new one.');
+    }
+    if (pending.attempts >= MAX_OTP_ATTEMPTS) {
+      throw new ApiError(429, 'Too many incorrect attempts. Please request a new code.');
+    }
+    if (hashOtp(otp) !== pending.otpHash) {
+      await registrationOtpRepository.incrementAttempts(email);
+      throw new ApiError(400, 'Incorrect code. Please try again.');
     }
 
-    const user = await userRepository.create(data);
+    // Re-checked here, not just at step 1 - someone else could have
+    // registered this exact email/phone in the minutes since (a genuine
+    // race, however rare) while this OTP sat unused.
+    await assertNotAlreadyRegistered(email, pending.phone);
+
+    const user = await userRepository.create({ name, email, phone: pending.phone, password });
+    await registrationOtpRepository.deleteByEmail(email);
     await storefrontService.resolveCustomer(user);
     const tokens = await issueTokens(user);
 

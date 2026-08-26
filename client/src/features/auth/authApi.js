@@ -12,6 +12,19 @@ import { api } from '@/lib/api';
 // authStore.js itself) deliberately - analytics.js already reads the
 // current user off authStore to attribute every event, so authStore.js
 // importing analytics.js back would be a circular import.
+// Steps 1+2 of the signup wizard (mobile, then email) - no session
+// bookkeeping needed (nothing is created yet), so this goes straight
+// through the shared api client, same as password-reset below.
+export const useStartRegistration = () =>
+  useMutation({
+    mutationFn: (payload) => api.post('/auth/register/send-otp', payload).then((res) => res.data),
+  });
+
+export const useResendRegistrationOtp = () =>
+  useMutation({
+    mutationFn: (email) => api.post('/auth/register/resend-otp', { email }).then((res) => res.data),
+  });
+
 export const useRegister = () => {
   const register = useAuthStore((s) => s.register);
   return useMutation({
