@@ -4,7 +4,14 @@ import { useAuthStore } from '@/store/authStore';
 // (frontend/src/lib/api.js) - the thing this file's own comment used to
 // flag as "once Customer Auth ships" future work. Not a rewrite of that
 // pattern, the same one.
-const BASE_URL = '/api/v1';
+//
+// Relative by default - works out of the box in dev (Vite's own /api
+// proxy, see vite.config.js) and in any production setup where this app's
+// own domain reverse-proxies /api/v1 to the backend. Only needs
+// VITE_API_BASE_URL set when the storefront and backend are on genuinely
+// different domains with no such proxy in front - set it to that
+// backend's full origin (e.g. https://api.yourdomain.com/api/v1).
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 function buildUrl(path, params) {
   if (!params) return path;

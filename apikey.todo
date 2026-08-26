@@ -7,6 +7,29 @@ feature just stays disabled/degraded until its key is added (see the
 everything below is filled in for real.
 
 
+0) DEPLOYMENT: VITE_API_BASE_URL (only if backend is on a different domain)
+-----------------------------------------------------
+  Set on BOTH client/ and frontend/ when deploying to a host (e.g. Vercel)
+  that only serves the static build with no reverse proxy in front of it -
+  both apps call the API via a relative "/api/v1" path by default, which
+  only works when the SAME domain also routes /api/v1 to the backend
+  (e.g. via a vercel.json rewrite, or an Nginx/Render setup that serves
+  both from one domain).
+
+  If the backend is instead on its own separate domain (Render/Railway/a
+  VPS, e.g. https://api.amardeepshitalaprashad.com), set this in each
+  app's Vercel project (Settings -> Environment Variables):
+    VITE_API_BASE_URL=https://<your-backend-domain>/api/v1
+
+  Leave unset if you set up a reverse-proxy rewrite instead - the relative
+  default already works in that case, no env var needed.
+
+  Also update backend/.env's CORS_ORIGIN to include both
+  https://amardeepshitalaprashad.com and https://admin.amardeepshitalaprashad.com
+  (already done if you're reading this after that pass) - and SITE_URL to
+  the real storefront domain (also already set).
+
+
 1) RAZORPAY (online payment - UPI/Cards/Netbanking)
 -----------------------------------------------------
   RAZORPAY_KEY_ID=
@@ -70,22 +93,14 @@ everything below is filled in for real.
 
 
 2) RESEND (transactional email - order confirmation, shipping updates,
-   password reset)
+   password reset) - DONE
 -----------------------------------------------------
-  RESEND_API_KEY=
+  RESEND_API_KEY= (filled in backend/.env)
 
-  Where to get it: https://resend.com -> API Keys. You'll also need to
-  verify a sending domain there (or use their test domain while testing).
-
-  Current status: notification.sender.js silently no-ops without this -
-  no crash, but customers get ZERO emails right now, including password
-  reset links (auth.service.js#requestPasswordReset). This is a real
-  launch blocker if you want password reset or order emails to work.
-
-  The "from" address is currently hardcoded in
-  backend/src/modules/shared/notification.sender.js as
-  notifications@amardeepswarnakalakendra.com - update that to match
-  whatever domain you verify in Resend.
+  The "from" address in backend/src/modules/shared/notification.sender.js
+  is set to notifications@amardeepshitalaprashad.com, matching the domain
+  verified in Resend - only revisit this if you verify a different domain
+  there later.
 
 
 3) WHATSAPP BUSINESS API (order updates via WhatsApp)

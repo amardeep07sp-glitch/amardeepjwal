@@ -21,7 +21,7 @@ export const notificationSender = {
   async sendEmail(to, subject, html) {
     if (!resendClient || !to) return { sent: false, reason: 'Email not configured or no recipient' };
     try {
-      await resendClient.emails.send({ from: 'notifications@amardeepswarnakalakendra.com', to, subject, html });
+      await resendClient.emails.send({ from: 'notifications@amardeepshitalaprashad.com', to, subject, html });
       return { sent: true };
     } catch (err) {
       logger.warn({ err: err.message, to }, 'Notification email failed');
