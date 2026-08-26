@@ -2,22 +2,22 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { NavLink } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, ChevronDown, ChevronRight, LayoutGrid, Sparkles } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronRight, Grid2x2, LayoutGrid, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavbarCategories } from '@/features/categories/categoriesApi';
 import { usePublicNavbarItems } from '@/features/navbar/navbarApi';
 import { useProductFacets, useProductList } from '@/features/products/productsApi';
 import { SmartLink } from '@/components/global/SmartLink';
-import { NAV_EXTRA_AFTER, NAV_EXTRA_BEFORE, categoryPath } from '@/config/navConfig';
+import {
+  DEFAULT_CATEGORIES_FALLBACK,
+  NAV_FEATURED_BRAND,
+  NAV_STATIC_AFTER,
+  categoryPath,
+} from '@/config/navConfig';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-// Real, round breakpoints intersected with the real min/max from
-// /products/public/facets (product.repository.js#getPublicPriceRange) - the
-// bands themselves are a UI convenience (same idea as Tanishq's own
-// "₹25,000-₹50,000" filter chip), never fabricated bounds. A breakpoint
-// outside the real [min,max] range is simply dropped.
 const PRICE_BREAKPOINTS = [25000, 50000, 100000, 200000, 500000];
 
 function buildPriceBands(priceRange) {
@@ -34,56 +34,45 @@ function buildPriceBands(priceRange) {
   }));
 }
 
-// Every real category now gets a hover mega menu, not just the ones with
-// subcategories - most of this catalog's categories are currently flat
-// (no children configured in Admin -> Categories yet), and a bare link
-// hovering over to nothing was the actual gap being fixed here. A category
-// WITH children keeps the rich subcategory grid ('category'); a leaf
-// category gets a live preview of its own real products instead
-// ('category-preview', fetched on hover in CategoryMegaMenuPanel via the
-// exact same /products/public?category= the category page itself uses) -
-// never a fabricated subcategory list standing in for data that doesn't
-// exist. Both share the same promo-panel + heading/CTA shape.
-function buildNavItems(categories) {
-  return categories.map((category) => {
+function buildNavCategoryItems(categories) {
+  const cats = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES_FALLBACK;
+
+  return cats.map((category) => {
+    const slug = category.slug || category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const shared = {
       name: category.name,
-      description: category.shortDescription,
+      description: category.shortDescription || `Explore our exclusive ${category.name} collection handcrafted in pure gold & diamonds.`,
       bannerMedia: category.bannerMedia,
       ctaLabel: `View All ${category.name}`,
-      ctaPath: categoryPath(category.slug),
+      ctaPath: categoryPath(slug),
     };
 
     return {
       label: category.name,
-      path: categoryPath(category.slug),
+      path: categoryPath(slug),
       megaMenu: category.children?.length
         ? {
-          ...shared,
-          type: 'category',
-          heading: `Shop ${category.name}`,
-          links: category.children.map((c) => ({
-            label: c.name,
-            path: categoryPath(c.slug),
-            thumbnailMedia: c.thumbnailMedia,
-            productCount: c.productCountRecursive ?? c.productCount ?? 0,
-          })),
-        }
+            ...shared,
+            type: 'category',
+            heading: `Shop ${category.name}`,
+            links: category.children.map((c) => ({
+              label: c.name,
+              path: categoryPath(c.slug || c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')),
+              thumbnailMedia: c.thumbnailMedia,
+              productCount: c.productCountRecursive ?? c.productCount ?? 0,
+            })),
+          }
         : {
-          ...shared,
-          type: 'category-preview',
-          heading: `${category.name} - Bestsellers`,
-          categorySlug: category.slug,
-          productCount: category.productCountRecursive ?? category.productCount ?? 0,
-        },
+            ...shared,
+            type: 'category-preview',
+            heading: `${category.name} - Bestsellers`,
+            categorySlug: slug,
+            productCount: category.productCountRecursive ?? category.productCount ?? 0,
+          },
     };
   });
 }
 
-// Small real product-thumbnail (or a gold gem glyph when the category has
-// none set yet) next to each child link - mirrors Tanishq's icon-per-item
-// mega menu without inventing fake imagery for categories that don't have a
-// thumbnail configured.
 function CategoryLinkThumb({ media }) {
   if (media?.thumbnailUrl || media?.secureUrl) {
     return (
@@ -101,15 +90,11 @@ function CategoryLinkThumb({ media }) {
   );
 }
 
-// The right-hand promo column of a category mega menu - a real banner photo
-// (Admin -> Categories -> banner image) with a scrim + CTA, or a tasteful
-// animated gold fallback when that field hasn't been set yet, so the menu
-// never looks unfinished either way.
 function CategoryPromoPanel({ megaMenu }) {
   return (
     <NavLink
       to={megaMenu.ctaPath}
-      className="group relative block h-full min-h-52 overflow-hidden rounded-2xl bg-[#FBF4E4]"
+      className="group relative block h-full min-h-52 overflow-hidden rounded-2xl bg-[#FBF4E4] ring-1 ring-[#EFE7D8]"
     >
       {megaMenu.bannerMedia?.secureUrl ? (
         <img
@@ -120,27 +105,21 @@ function CategoryPromoPanel({ megaMenu }) {
       ) : (
         <div className="absolute inset-0 bg-linear-to-br from-[#C8A24D]/25 via-[#FBF4E4] to-[#FBF4E4]" />
       )}
-      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent" />
+      <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-transparent" />
 
       <div className="relative flex h-full flex-col justify-end gap-1 p-5">
         <p className="font-nav text-lg font-medium text-white drop-shadow-sm">{megaMenu.name}</p>
         {megaMenu.description && (
           <p className="line-clamp-2 text-xs text-white/85">{megaMenu.description}</p>
         )}
-        <span className="mt-2 inline-flex w-fit items-center gap-1.5 text-xs font-semibold tracking-wide text-white uppercase">
-          Shop Now <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+        <span className="mt-2 inline-flex w-fit items-center gap-1.5 text-xs font-semibold tracking-wide text-[#FCE08B] uppercase">
+          Explore Collection <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-1" />
         </span>
       </div>
     </NavLink>
   );
 }
 
-// A leaf category's hover content - its own real, live products (same
-// /products/public?category= read the category page itself uses, just
-// limit=4), not a placeholder. `enabled` keeps this from firing until the
-// category is actually the one being hovered; react-query then caches it
-// by slug, so re-hovering the same category after the first time is
-// instant with no refetch.
 function CategoryProductPreview({ categorySlug, ctaPath }) {
   const { data, isLoading } = useProductList({ category: categorySlug, limit: 4, sortBy: 'featured' });
   const products = data?.items ?? [];
@@ -156,7 +135,15 @@ function CategoryProductPreview({ categorySlug, ctaPath }) {
   }
 
   if (products.length === 0) {
-    return <p className="text-sm text-[#8A8378]">No products in this category yet.</p>;
+    return (
+      <div className="flex flex-col items-center justify-center rounded-2xl bg-[#FFF9EF] p-8 text-center border border-[#EFE7D8]">
+        <Sparkles className="size-8 text-[#C8A24D] mb-2" />
+        <p className="text-sm font-medium text-[#2A080C]">Curated Masterpieces</p>
+        <p className="text-xs text-[#8A8378] mt-1 max-w-sm">
+          Discover our exquisite jewellery crafted with certified gold & diamonds.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -184,8 +171,6 @@ function CategoryProductPreview({ categorySlug, ctaPath }) {
           </NavLink>
         </li>
       ))}
-      {/* Ties the preview grid back to the category page it's a preview
-          of - a 5th "tile" that behaves like the CTA link below it. */}
       {products.length >= 4 && (
         <li>
           <NavLink
@@ -208,22 +193,12 @@ const withQuery = (path, params) => {
 };
 
 const FACET_TABS = [
-  { key: 'category', label: 'Category' },
-  { key: 'price', label: 'Price' },
-  { key: 'occasion', label: 'Occasion' },
-  { key: 'gender', label: 'Gender' },
+  { key: 'category', label: 'Categories' },
+  { key: 'price', label: 'By Price' },
+  { key: 'occasion', label: 'By Occasion' },
+  { key: 'gender', label: 'By Gender' },
 ];
 
-// The tabbed left rail + value grid (Category / Price / Occasion / Gender)
-// inside a category's mega menu - mirrors tanishq.co.in's hover panel.
-// Category uses this category's own real children (see buildNavItems);
-// Price/Occasion/Gender use the real, site-wide facet counts from
-// /products/public/facets (product.service.js#getPublicFacets) - the exact
-// same data source that already powers the All Products page's filter
-// sidebar (ProductFilterSidebar.jsx), just surfaced here too. A tab only
-// appears when it actually has real values to show. Every value link stays
-// scoped to the category being hovered (categoryPath + the facet as a query
-// param), so "Diamond > Wedding" really does filter to Diamond AND Wedding.
 function CategoryMegaMenuPanel({ megaMenu }) {
   const [tab, setTab] = useState('category');
   const { data: facets } = useProductFacets();
@@ -238,16 +213,16 @@ function CategoryMegaMenuPanel({ megaMenu }) {
   });
 
   return (
-    <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-10 py-8 lg:grid-cols-[160px_1fr_300px]">
-      <div className="flex gap-1 overflow-x-auto lg:flex-col lg:gap-0.5 lg:overflow-visible lg:border-r lg:border-[#EFE6D3] lg:pr-4">
+    <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-8 py-7 lg:grid-cols-[160px_1fr_300px]">
+      <div className="flex gap-1 overflow-x-auto lg:flex-col lg:gap-1 lg:overflow-visible lg:border-r lg:border-[#EFE6D3] lg:pr-4">
         {availableTabs.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
             className={cn(
-              'font-nav shrink-0 rounded-lg px-3 py-2 text-left text-sm font-light whitespace-nowrap transition-all duration-200',
-              tab === t.key ? 'bg-[#FBF4E4] text-[#B88A2F] font-medium' : 'text-[#4A463F] hover:bg-[#FFF9EF] hover:text-[#C8A24D]'
+              'font-nav cursor-pointer shrink-0 rounded-lg px-3 py-2 text-left text-xs sm:text-sm whitespace-nowrap transition-all duration-200',
+              tab === t.key ? 'bg-[#FFF9EF] text-[#9A6B12] font-semibold ring-1 ring-[#C8A24D]/30' : 'text-[#4A463F] hover:bg-[#FAF6EE] hover:text-[#9A6B12]'
             )}
           >
             {t.label}
@@ -264,7 +239,7 @@ function CategoryMegaMenuPanel({ megaMenu }) {
                 <li key={link.path}>
                   <NavLink
                     to={link.path}
-                    className="font-nav flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm font-light text-[#4A463F] transition-all duration-300 hover:bg-[#FFF9EF] hover:text-[#C8A24D]"
+                    className="font-nav flex items-center gap-2.5 rounded-lg px-2 py-2 text-xs sm:text-sm font-light text-[#4A463F] transition-all duration-200 hover:bg-[#FFF9EF] hover:text-[#C8A24D]"
                   >
                     <CategoryLinkThumb media={link.thumbnailMedia} />
                     <span className="min-w-0 flex-1 truncate">{link.label}</span>
@@ -275,22 +250,20 @@ function CategoryMegaMenuPanel({ megaMenu }) {
             </ul>
             <NavLink
               to={megaMenu.ctaPath}
-              className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#B88A2F] transition-colors duration-300 hover:text-[#C8A24D]"
+              className="mt-5 inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#B88A2F] transition-colors duration-200 hover:text-[#C8A24D]"
             >
               {megaMenu.ctaLabel} <ArrowRight className="size-3.5" />
             </NavLink>
           </>
         )}
 
-        {/* Leaf category (no subcategories configured) - a live preview of
-            its own real products instead of an empty/missing dropdown. */}
         {tab === 'category' && megaMenu.type === 'category-preview' && (
           <>
             <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#B88A2F]">{megaMenu.heading}</p>
             <CategoryProductPreview categorySlug={megaMenu.categorySlug} ctaPath={megaMenu.ctaPath} />
             <NavLink
               to={megaMenu.ctaPath}
-              className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#B88A2F] transition-colors duration-300 hover:text-[#C8A24D]"
+              className="mt-5 inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#B88A2F] transition-colors duration-200 hover:text-[#C8A24D]"
             >
               {megaMenu.ctaLabel} <ArrowRight className="size-3.5" />
             </NavLink>
@@ -305,7 +278,7 @@ function CategoryMegaMenuPanel({ megaMenu }) {
                 <li key={band.label}>
                   <NavLink
                     to={withQuery(megaMenu.ctaPath, { minPrice: band.min, maxPrice: band.max })}
-                    className="font-nav block rounded-lg px-3 py-2.5 text-sm font-light text-[#4A463F] ring-1 ring-[#EFE6D3] transition-all duration-300 hover:bg-[#FFF9EF] hover:text-[#C8A24D] hover:ring-[#C8A24D]/40"
+                    className="font-nav block rounded-lg px-3 py-2.5 text-xs sm:text-sm font-light text-[#4A463F] ring-1 ring-[#EFE6D3] transition-all duration-200 hover:bg-[#FFF9EF] hover:text-[#C8A24D] hover:ring-[#C8A24D]/40"
                   >
                     {band.label}
                   </NavLink>
@@ -323,7 +296,7 @@ function CategoryMegaMenuPanel({ megaMenu }) {
                 <li key={o.value}>
                   <NavLink
                     to={withQuery(megaMenu.ctaPath, { occasion: o.value })}
-                    className="font-nav flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm font-light text-[#4A463F] ring-1 ring-[#EFE6D3] transition-all duration-300 hover:bg-[#FFF9EF] hover:text-[#C8A24D] hover:ring-[#C8A24D]/40"
+                    className="font-nav flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-light text-[#4A463F] ring-1 ring-[#EFE6D3] transition-all duration-200 hover:bg-[#FFF9EF] hover:text-[#C8A24D] hover:ring-[#C8A24D]/40"
                   >
                     {o.label} <span className="text-xs text-[#8A8378]">{o.count}</span>
                   </NavLink>
@@ -341,7 +314,7 @@ function CategoryMegaMenuPanel({ megaMenu }) {
                 <li key={g.value}>
                   <NavLink
                     to={withQuery(megaMenu.ctaPath, { gender: g.value })}
-                    className="font-nav flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm font-light text-[#4A463F] ring-1 ring-[#EFE6D3] transition-all duration-300 hover:bg-[#FFF9EF] hover:text-[#C8A24D] hover:ring-[#C8A24D]/40"
+                    className="font-nav flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-light text-[#4A463F] ring-1 ring-[#EFE6D3] transition-all duration-200 hover:bg-[#FFF9EF] hover:text-[#C8A24D] hover:ring-[#C8A24D]/40"
                   >
                     {g.label} <span className="text-xs text-[#8A8378]">{g.count}</span>
                   </NavLink>
@@ -357,12 +330,6 @@ function CategoryMegaMenuPanel({ megaMenu }) {
   );
 }
 
-// Desktop-only category strip + hover mega menus, live from
-// /categories/public/navbar - never hardcoded. Mobile gets the same data
-// rendered as an accordion inside MobileMenu instead. Never renders below
-// `lg`. Degrades quietly (just the static New Arrivals/Offers links) while
-// loading or if the category fetch fails - a broken nav must never break
-// the whole header.
 export function CategoryNav() {
   const { data: categories } = useNavbarCategories();
   const { data: customItems } = usePublicNavbarItems();
@@ -371,26 +338,39 @@ export function CategoryNav() {
   const closeTimer = useRef(null);
   const navRef = useRef(null);
 
+  // Reorganized nav list: Categories first, then Mudrika Brand, then New Arrivals/Offers/More
+  const categoryNavItems = useMemo(() => buildNavCategoryItems(categories ?? []), [categories]);
+
   const navItems = useMemo(
-    () => [...NAV_EXTRA_BEFORE, ...buildNavItems(categories ?? []), ...NAV_EXTRA_AFTER],
-    [categories]
+    () => [
+      ...categoryNavItems,
+      NAV_FEATURED_BRAND,
+      ...NAV_STATIC_AFTER,
+    ],
+    [categoryNavItems]
   );
 
   const openMenu = (index) => {
     clearTimeout(closeTimer.current);
     setOpenIndex(index);
   };
+
   const scheduleClose = () => {
-    closeTimer.current = setTimeout(() => setOpenIndex(null), 150);
+    closeTimer.current = setTimeout(() => setOpenIndex(null), 180);
   };
 
   const activeItem = openIndex !== null ? navItems[openIndex] : null;
 
-  // The mega menu panel is portaled to <body> (below) so it can't ever be
-  // clipped by an ancestor's `overflow-hidden` - the one thing that would
-  // otherwise conflict with Header.jsx wrapping this bar in a collapsing
-  // container for the scroll-aware hide/show. Its position is computed here,
-  // independent of wherever it's actually rendered in the DOM.
+  // Auto-dismiss mega menu on scroll to prevent detached overlays
+  useEffect(() => {
+    const handleScroll = () => {
+      if (openIndex !== null) setOpenIndex(null);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [openIndex]);
+
+  // Update position on hover and window resize
   useEffect(() => {
     if (!activeItem || !navRef.current) {
       setMenuRect(null);
@@ -398,8 +378,9 @@ export function CategoryNav() {
     }
 
     const updateRect = () => {
+      if (!navRef.current) return;
       const rect = navRef.current.getBoundingClientRect();
-      setMenuRect({ top: rect.bottom, left: rect.left, width: rect.width });
+      setMenuRect({ top: rect.bottom, left: 0, width: window.innerWidth });
     };
     updateRect();
 
@@ -410,16 +391,16 @@ export function CategoryNav() {
   return (
     <nav
       ref={navRef}
-      className="relative hidden border-b border-[#EFE7D8] bg-[#FCFAF6] lg:block"
+      className="relative hidden border-b border-[#EFE7D8] bg-[#FAF8F4] lg:block"
       onMouseLeave={scheduleClose}
     >
       <div className="mx-auto flex max-w-7xl items-center px-4 sm:px-6 lg:px-8">
-        {/* Shop By Category Button */}
+        {/* Shop By Category Dropdown Button */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="cursor-pointer font-nav my-1.5 mr-2 flex shrink-0 items-center gap-2 rounded-lg border border-[#EAE0CD] bg-white px-3.5 py-1.5 text-xs font-medium text-[#2B1B0E] shadow-xs transition-all duration-200 hover:border-[#C8A24D] hover:bg-[#FFF9EF] hover:text-[#9A6B12]"
+              className="cursor-pointer font-nav my-1.5 mr-2 flex shrink-0 items-center gap-2 rounded-xl border border-[#EAE0CD] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#2B1B0E] shadow-2xs transition-all duration-200 hover:border-[#C8A24D] hover:bg-[#FFF9EF] hover:text-[#9A6B12]"
             >
               <LayoutGrid className="size-3.5 text-[#C8A24D]" />
               Shop by Category
@@ -429,29 +410,42 @@ export function CategoryNav() {
 
           <DropdownMenuContent
             align="start"
-            className="w-64 rounded-2xl border border-[#EFE7D8] bg-white p-2 shadow-[0_15px_45px_rgba(0,0,0,0.08)]"
+            className="w-68 rounded-2xl border border-[#EFE7D8] bg-white p-2 shadow-[0_15px_45px_rgba(0,0,0,0.08)] z-[70]"
           >
-            {(categories ?? []).map((cat) => (
+            <div className="px-3 py-1.5 text-[11px] font-bold tracking-wider text-[#9A6B12] uppercase">
+              All Jewellery Categories
+            </div>
+            {((categories && categories.length > 0) ? categories : DEFAULT_CATEGORIES_FALLBACK).map((cat) => (
               <DropdownMenuItem
-                key={cat.id}
+                key={cat.id || cat.slug}
                 asChild
-                className="rounded-xl transition-colors focus:bg-[#FFF9EF]"
+                className="rounded-xl transition-colors focus:bg-[#FFF9EF] cursor-pointer"
               >
                 <NavLink
-                  to={categoryPath(cat.slug)}
+                  to={categoryPath(cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}
                   className="font-nav flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium text-[#3F3A33] transition-all duration-200 hover:text-[#9A6B12]"
                 >
-                  {cat.name}
+                  <span>{cat.name}</span>
                   <ChevronRight className="size-3 text-[#C8A24D]/60" />
                 </NavLink>
               </DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator className="my-1 bg-[#EFE7D8]" />
+            <DropdownMenuItem asChild className="rounded-xl focus:bg-[#FFF9EF] cursor-pointer">
+              <NavLink
+                to="/categories"
+                className="font-nav flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold text-[#9A6B12]"
+              >
+                <span>View All Categories</span>
+                <ArrowRight className="size-3" />
+              </NavLink>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
         <div className="h-5 w-px bg-[#EFE7D8] mr-2" />
 
-        {/* Main Navigation Items */}
+        {/* Main Navigation Row */}
         <div className="relative min-w-0 flex-1">
           <ul className="scrollbar-none flex items-center overflow-x-auto gap-0.5 sm:gap-1 py-1">
             {navItems.map((item, index) => {
@@ -490,11 +484,8 @@ export function CategoryNav() {
                     onFocus={() => item.megaMenu && openMenu(index)}
                     className={({ isActive }) =>
                       cn(
-                        "font-nav relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs sm:text-[13px] font-medium whitespace-nowrap text-[#4A443A] transition-all duration-200 hover:bg-[#FAF6EE] hover:text-[#9A6B12]",
-
-                        isActive &&
-                        "text-[#9A6B12] font-semibold bg-[#FAF4E6]",
-
+                        "font-nav relative flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs sm:text-[13px] font-medium whitespace-nowrap text-[#4A443A] transition-all duration-200 hover:bg-[#FFF9EF] hover:text-[#9A6B12]",
+                        isActive && "text-[#9A6B12] font-semibold bg-[#FAF4E6]",
                         item.highlight && !isActive && "text-[#9A6B12]"
                       )
                     }
@@ -523,14 +514,14 @@ export function CategoryNav() {
               );
             })}
 
-            {/* Admin Custom Items */}
+            {/* Custom Admin Items */}
             {(customItems ?? []).map((item) => (
               <li key={item.id} className="shrink-0">
                 <SmartLink
                   to={item.path}
                   target={item.openInNewTab ? '_blank' : undefined}
                   rel={item.openInNewTab ? 'noopener noreferrer' : undefined}
-                  className="font-nav flex items-center rounded-lg px-3 py-1.5 text-xs sm:text-[13px] font-medium whitespace-nowrap text-[#4A443A] transition-all duration-200 hover:bg-[#FAF6EE] hover:text-[#9A6B12]"
+                  className="font-nav flex items-center rounded-lg px-2.5 py-1.5 text-xs sm:text-[13px] font-medium whitespace-nowrap text-[#4A443A] transition-all duration-200 hover:bg-[#FFF9EF] hover:text-[#9A6B12]"
                 >
                   {item.label}
                 </SmartLink>
@@ -539,33 +530,30 @@ export function CategoryNav() {
           </ul>
 
           {/* Fade hint */}
-          <div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-linear-to-l from-[#FCFAF6] to-transparent" />
+          <div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-linear-to-l from-[#FAF8F4] to-transparent" />
         </div>
       </div>
 
-      {/* Mega Menu - portaled to <body>, see the effect above and the
-          comment on `menuRect`. Never rendered as a descendant of this
-          <nav> so no ancestor's `overflow-hidden` (Header.jsx's scroll-hide
-          collapse wrapper) can ever clip it. */}
+      {/* Portaled Mega Menu */}
       {createPortal(
         <AnimatePresence>
           {activeItem?.megaMenu && menuRect && (
             <motion.div
               key={activeItem.label}
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
               onMouseEnter={() => openMenu(openIndex)}
               onMouseLeave={scheduleClose}
-              style={{ position: 'fixed', top: menuRect.top, left: menuRect.left, width: menuRect.width }}
-              className="z-40 border-t border-[#EFE6D3] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.08)]"
+              style={{ position: 'fixed', top: menuRect.top, left: 0, width: '100vw' }}
+              className="z-[60] border-t border-[#EFE7D8] bg-white/98 backdrop-blur-xl shadow-[0_25px_60px_rgba(27,15,5,0.12)]"
             >
               {activeItem.megaMenu.type === 'category' || activeItem.megaMenu.type === 'category-preview' ? (
                 <CategoryMegaMenuPanel key={activeItem.label} megaMenu={activeItem.megaMenu} />
               ) : (
                 <div className="mx-auto grid max-w-7xl grid-cols-2 gap-10 px-10 py-8 sm:grid-cols-3">
-                  {activeItem.megaMenu.columns.map((col) => (
+                  {activeItem.megaMenu.columns?.map((col) => (
                     <div key={col.heading}>
                       <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#B88A2F]">
                         {col.heading}
@@ -576,7 +564,7 @@ export function CategoryNav() {
                           <li key={link.path}>
                             <NavLink
                               to={link.path}
-                              className="font-nav block rounded-lg px-3 py-2 text-sm font-light text-[#4A463F] transition-all duration-300 hover:bg-[#FFF9EF] hover:text-[#C8A24D]"
+                              className="font-nav block rounded-lg px-3 py-2 text-xs sm:text-sm font-light text-[#4A463F] transition-all duration-200 hover:bg-[#FFF9EF] hover:text-[#C8A24D]"
                             >
                               {link.label}
                             </NavLink>

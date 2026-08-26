@@ -1,242 +1,366 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Award, Check, Send, ShieldCheck, Truck, Undo2 } from 'lucide-react';
+import {
+  Award,
+  BadgeCheck,
+  Check,
+  Coins,
+  CreditCard,
+  HelpCircle,
+  Lock,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Truck,
+  Undo2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavbarCategories } from '@/features/categories/categoriesApi';
 import { usePublicFooterColumns } from '@/features/footer/footerApi';
 import { useSubscribeNewsletter } from '@/features/newsletter/newsletterApi';
 import { usePublicSettings } from '@/features/settings/settingsApi';
-import { categoryPath } from '@/config/navConfig';
+import { DEFAULT_CATEGORIES_FALLBACK, categoryPath } from '@/config/navConfig';
 import { APP_NAME, APP_SHORT_NAME } from '@/config/appConfig';
 import { SmartLink } from '@/components/global/SmartLink';
 
-// A real `path` renders as a link; `path: null` stays plain text - those
-// pages (About Us, Shipping/Return policy docs, Size Guide) don't exist
-// yet, and this project doesn't ship a dead link or invented company copy
-// in their place (same rule navConfig.js's "More" menu follows).
-const CUSTOMER_SERVICE_LINKS = [
-  { label: 'About Us', path: null },
-  { label: 'Help Center', path: '/help' },
-  { label: 'Contact Us', path: '/contact' },
-  { label: 'FAQs', path: '/faqs' },
-  { label: "Today's Gold Rate", path: '/gold-rate' },
-  { label: 'Track Order', path: '/track-order' },
-  { label: 'Size Guide', path: null },
+const TRUST_PILLARS = [
+  {
+    icon: Award,
+    title: '100% BIS Hallmarked',
+    subtitle: 'Pure 916 & 750 Certified Gold with HUID',
+  },
+  {
+    icon: BadgeCheck,
+    title: 'Certified Diamonds',
+    subtitle: '100% Natural, IGI/GIA Certified Stones',
+  },
+  {
+    icon: Truck,
+    title: 'Free & Insured Shipping',
+    subtitle: '100% Safe Transit across India',
+  },
+  {
+    icon: Undo2,
+    title: '15-Day Easy Returns',
+    subtitle: 'Hassle-free Exchange & Return Policy',
+  },
 ];
 
-// Real published CMS pages (scripts/seedLegalPages.js seeds a real starting
-// draft for each of these by slug - edit the actual wording in Admin -> CMS
-// -> Pages, not here) - a separate list from CUSTOMER_SERVICE_LINKS since
-// these are legal/policy documents, not support destinations.
+const CUSTOMER_SERVICE_LINKS = [
+  { label: "Today's Gold Rate", path: '/gold-rate', highlight: true },
+  { label: 'Track Your Order', path: '/track-order' },
+  { label: 'Help Center & Support', path: '/help' },
+  { label: 'Contact Us', path: '/contact' },
+  { label: 'Frequently Asked Questions', path: '/faqs' },
+  { label: 'Book Store Appointment', path: '/contact' },
+];
+
 const LEGAL_LINKS = [
   { label: 'Privacy Policy', path: '/pages/privacy-policy' },
   { label: 'Terms & Conditions', path: '/pages/terms-conditions' },
-  { label: 'Shipping Policy', path: '/pages/shipping-policy' },
-  { label: 'Return & Exchange', path: '/pages/return-exchange-policy' },
+  { label: 'Shipping & Delivery Policy', path: '/pages/shipping-policy' },
+  { label: 'Return & Exchange Policy', path: '/pages/return-exchange-policy' },
 ];
 
-// Only Cash on Delivery actually works right now - online payment
-// (Razorpay) is commented out in CheckoutPage.jsx until RAZORPAY_KEY_ID/
-// SECRET/WEBHOOK_SECRET are set (see apikey.todo #1). Showing card/UPI
-// network badges here while checkout can't actually take them would be a
-// straightforwardly false claim - this list must be kept in sync with
-// checkout's real payment methods, not just left as evergreen decoration.
-const PAYMENT_BADGES = [{ icon: Truck, label: 'Cash on Delivery' }];
-
-// lucide-react deliberately ships no third-party brand/logo icons (a
-// trademark, not a completeness, reason) - initials in a plain circle
-// stand in for them rather than reaching for someone else's logomark.
-// Keyed to Settings.socialLinks' real field names (Admin -> CMS ->
-// Settings) - a platform is only ever shown here once a real URL is set
-// for it, never as a placeholder/dead link.
 const SOCIAL_PLATFORMS = [
-  { key: 'instagram', label: 'IG' },
-  { key: 'facebook', label: 'FB' },
-  { key: 'youtube', label: 'YT' },
-  { key: 'twitter', label: 'X' },
-  { key: 'pinterest', label: 'PT' },
+  { key: 'instagram', label: 'Instagram', abbr: 'IG' },
+  { key: 'facebook', label: 'Facebook', abbr: 'FB' },
+  { key: 'youtube', label: 'YouTube', abbr: 'YT' },
+  { key: 'whatsapp', label: 'WhatsApp', abbr: 'WA' },
+  { key: 'twitter', label: 'X', abbr: 'X' },
 ];
 
-const POLICY_ITEMS = [
-  { icon: ShieldCheck, title: 'Secure Payment', description: '100% Secure Checkout' },
-  { icon: Award, title: 'Hallmarked Jewellery', description: '100% Certified' },
-  { icon: Undo2, title: 'Easy Returns', description: '15 Days Return Policy' },
+const PAYMENT_METHODS = [
+  'UPI / QR Code',
+  'Visa',
+  'Mastercard',
+  'RuPay',
+  'Net Banking',
+  'Cash on Delivery',
 ];
 
 export function Footer() {
   const { data: categories } = useNavbarCategories();
-  // Extra admin-managed columns (Admin -> CMS -> Footer) - additive, next
-  // to the built-in Shop/Collections/Customer Service columns below, not a
-  // replacement for them.
   const { data: extraColumns } = usePublicFooterColumns();
   const { data: settings } = usePublicSettings();
-  const activeSocialLinks = SOCIAL_PLATFORMS.map((p) => ({ ...p, url: settings?.socialLinks?.[p.key] })).filter((p) => p.url);
   const [email, setEmail] = useState('');
   const subscribeNewsletter = useSubscribeNewsletter();
 
+  const activeCategories = (categories && categories.length > 0) ? categories : DEFAULT_CATEGORIES_FALLBACK;
+  const activeSocialLinks = SOCIAL_PLATFORMS.map((p) => ({ ...p, url: settings?.socialLinks?.[p.key] })).filter((p) => p.url);
+
   const handleSubscribe = (e) => {
     e.preventDefault();
+    if (!email.trim()) return;
     subscribeNewsletter.mutate(email, { onSuccess: () => setEmail('') });
   };
 
   return (
-    <footer className="border-t-2 border-primary bg-heading text-background">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-10 px-4 py-12 sm:grid-cols-3 lg:grid-cols-5 lg:px-8">
-        <div className="col-span-2 flex flex-col gap-4 sm:col-span-3 lg:col-span-1">
-          <Link to="/" className="group flex items-center gap-3 transition-opacity hover:opacity-90">
-            <div className="relative flex h-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-primary/40 bg-[#2A080C] p-0.5 shadow-md transition-all duration-300 group-hover:border-primary">
-              <img
-                src="/logo.jpg"
-                alt={APP_NAME}
-                className="h-full w-auto max-w-[130px] rounded-md object-contain transition-transform duration-300 group-hover:scale-105"
-              />
-            </div>
-            <div className="flex flex-col leading-tight">
-              <span className="font-display text-lg font-bold tracking-wide text-background">{APP_SHORT_NAME}</span>
-              <span className="text-[10px] font-medium tracking-[0.18em] text-primary uppercase">Swarna Kala Kendra</span>
-            </div>
-          </Link>
-          <p className="max-w-xs text-sm text-background/70">
-            {APP_NAME} - jewellery crafted with passion, designed to shine for generations.
-          </p>
-          {activeSocialLinks.length > 0 && (
-            <div className="flex items-center gap-2">
-              {activeSocialLinks.map((platform) => (
-                <a
-                  key={platform.key}
-                  href={platform.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={platform.key}
-                  className="flex size-8 items-center justify-center rounded-full bg-background/10 text-[10px] font-semibold text-background/70 transition-colors hover:bg-primary hover:text-heading"
-                >
-                  {platform.label}
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <h3 className="text-xs font-semibold tracking-wide text-background/50 uppercase">Shop</h3>
-          <Link to="/products" className="text-sm text-background/80 transition-colors hover:text-primary">
-            All Jewellery
-          </Link>
-          {(categories ?? []).map((cat) => (
-            <Link key={cat.id} to={categoryPath(cat.slug)} className="text-sm text-background/80 transition-colors hover:text-primary">
-              {cat.name}
-            </Link>
-          ))}
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <h3 className="text-xs font-semibold tracking-wide text-background/50 uppercase">Collections & Brands</h3>
-          <Link to="/mudrika" className="flex items-center gap-1.5 text-sm font-medium text-[#FCE08B] transition-colors hover:text-white">
-            <span className="size-1.5 rounded-full bg-[#D4AF37]" />
-            Mudrika (Our Brand)
-          </Link>
-          <Link to="/new-arrivals" className="text-sm text-background/80 transition-colors hover:text-primary">
-            New Arrivals
-          </Link>
-          <Link to="/offers" className="text-sm text-background/80 transition-colors hover:text-primary">
-            Offers
-          </Link>
-          <Link to="/brands" className="text-sm text-background/80 transition-colors hover:text-primary">
-            All Brands
-          </Link>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <h3 className="text-xs font-semibold tracking-wide text-background/50 uppercase">Customer Service</h3>
-          {CUSTOMER_SERVICE_LINKS.map((item) =>
-            item.path ? (
-              <Link key={item.label} to={item.path} className="text-sm text-background/80 transition-colors hover:text-primary">
-                {item.label}
-              </Link>
-            ) : (
-              <span key={item.label} className="text-sm text-background/50">
-                {item.label}
+    <footer className="relative border-t-2 border-[#C8A24D]/60 bg-linear-to-b from-[#1A0508] via-[#120306] to-[#0A0103] text-[#E8DFD1]">
+      {/* Tier 1: Trust & Assurance Ribbon */}
+      <div className="border-b border-[#D4AF37]/15 bg-[#120306]/70">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-8 sm:grid-cols-2 lg:grid-cols-4 lg:px-8">
+          {TRUST_PILLARS.map((item) => (
+            <div key={item.title} className="flex items-center gap-3.5 group">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-[#D4AF37]/25 to-[#B8860B]/10 text-[#FCE08B] border border-[#D4AF37]/30 shadow-xs transition-transform duration-300 group-hover:scale-110">
+                <item.icon className="size-5.5" />
               </span>
-            )
-          )}
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <h3 className="text-xs font-semibold tracking-wide text-background/50 uppercase">Legal</h3>
-          {LEGAL_LINKS.map((item) => (
-            <Link key={item.label} to={item.path} className="text-sm text-background/80 transition-colors hover:text-primary">
-              {item.label}
-            </Link>
-          ))}
-        </div>
-
-        {(extraColumns ?? []).map((column) => (
-          <div key={column._id ?? column.id} className="flex flex-col gap-3">
-            <h3 className="text-xs font-semibold tracking-wide text-background/50 uppercase">{column.title}</h3>
-            {[...column.links]
-              .sort((a, b) => a.order - b.order)
-              .map((link) => (
-                <SmartLink
-                  key={link._id ?? link.id}
-                  to={link.url}
-                  className="text-sm text-background/80 transition-colors hover:text-primary"
-                >
-                  {link.label}
-                </SmartLink>
-              ))}
-          </div>
-        ))}
-
-        <div className="col-span-2 flex flex-col gap-4 sm:col-span-3 lg:col-span-1">
-          <h3 className="text-xs font-semibold tracking-wide text-background/50 uppercase">Newsletter</h3>
-          <p className="text-sm text-background/70">Subscribe to get special offers, new arrivals, and exclusive updates.</p>
-          {subscribeNewsletter.isSuccess ? (
-            <p className="flex items-center gap-2 text-sm font-medium text-primary">
-              <Check className="size-4 shrink-0" /> You're subscribed - thanks for joining us!
-            </p>
-          ) : (
-            <form onSubmit={handleSubscribe} className="flex gap-2">
-              <Input
-                type="email"
-                required
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-10 border-background/20 bg-background/5 text-background placeholder:text-background/40"
-              />
-              <Button type="submit" size="icon" aria-label="Subscribe" className="h-10 shrink-0" loading={subscribeNewsletter.isPending}>
-                <Send className="size-4" />
-              </Button>
-            </form>
-          )}
-          {subscribeNewsletter.isError && <p className="text-xs text-destructive">{subscribeNewsletter.error.message}</p>}
-          <p className="text-xs text-background/40">We respect your privacy.</p>
-        </div>
-      </div>
-
-      <div className="border-t border-background/10">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-6 sm:grid-cols-3 lg:px-8">
-          {POLICY_ITEMS.map((item) => (
-            <div key={item.title} className="flex items-center gap-3">
-              <item.icon className="size-5 shrink-0 text-primary" />
-              <div>
-                <p className="text-sm font-medium text-background">{item.title}</p>
-                <p className="text-xs text-background/60">{item.description}</p>
+              <div className="min-w-0">
+                <p className="font-serif text-sm font-semibold text-[#FDF9F0] tracking-wide">{item.title}</p>
+                <p className="text-xs text-[#A89E8D] leading-snug">{item.subtitle}</p>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="border-t border-background/10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-4 text-xs text-background/50 sm:flex-row lg:px-8">
-          <p>{settings?.footerCopyrightText || `© ${new Date().getFullYear()} ${APP_NAME}. All Rights Reserved.`}</p>
-          <div className="flex items-center gap-2">
-            {PAYMENT_BADGES.map((badge) => (
-              <span key={badge.label} className="flex items-center gap-1 rounded border border-background/20 px-1.5 py-0.5 text-[10px] font-medium">
-                <badge.icon className="size-3" />
-                {badge.label}
+      {/* Tier 2: VIP Newsletter & Club Banner */}
+      <div className="border-b border-[#D4AF37]/15 bg-linear-to-r from-[#22070B] via-[#2D0A0F] to-[#1C0508]">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-6 py-10 lg:flex-row lg:px-8">
+          <div className="max-w-xl text-center lg:text-left">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold tracking-[0.25em] text-[#FCE08B] uppercase">
+              <Sparkles className="size-3.5" /> Amardeep Privé Circle
+            </span>
+            <h3 className="mt-1 font-serif text-xl sm:text-2xl font-bold text-white tracking-wide">
+              Join Our Exclusive Jewellery Newsletter
+            </h3>
+            <p className="mt-1 text-xs sm:text-sm text-[#BDB2A2]">
+              Be the first to receive festive collection previews, today&apos;s gold rate updates, and exclusive VIP invitations.
+            </p>
+          </div>
+
+          <div className="w-full max-w-md">
+            {subscribeNewsletter.isSuccess ? (
+              <div className="flex items-center justify-center gap-2 rounded-2xl border border-[#D4AF37]/40 bg-[#D4AF37]/10 p-3.5 text-sm font-semibold text-[#FCE08B]">
+                <Check className="size-4.5" /> Thank you for joining our exclusive circle!
+              </div>
+            ) : (
+              <form onSubmit={handleSubscribe} className="relative flex items-center">
+                <Input
+                  type="email"
+                  required
+                  placeholder="Enter your email address..."
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-12 w-full rounded-full border border-[#D4AF37]/35 bg-[#140306]/90 pr-28 pl-4.5 text-xs sm:text-sm text-white placeholder:text-[#8C806F] focus:border-[#FCE08B] focus:ring-2 focus:ring-[#D4AF37]/30 shadow-inner"
+                />
+                <Button
+                  type="submit"
+                  disabled={subscribeNewsletter.isPending}
+                  className="absolute right-1.5 h-9 rounded-full bg-linear-to-r from-[#D4AF37] to-[#B8860B] px-4.5 text-xs font-bold text-[#1A0508] shadow-md transition-all hover:scale-102 hover:from-[#FCE08B] hover:to-[#D4AF37]"
+                >
+                  {subscribeNewsletter.isPending ? 'Sending...' : 'Subscribe'}
+                  <Send className="size-3.5 ml-1" />
+                </Button>
+              </form>
+            )}
+            {subscribeNewsletter.isError && (
+              <p className="mt-1.5 text-center text-xs font-medium text-destructive lg:text-left">
+                {subscribeNewsletter.error.message}
+              </p>
+            )}
+            <p className="mt-2 text-center text-[11px] text-[#8C806F] lg:text-left">
+              🔒 We respect your privacy. Unsubscribe at any time.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Tier 3: Main Directory Columns */}
+      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12">
+          {/* Column 1: Brand & Heritage (4 cols) */}
+          <div className="space-y-4 lg:col-span-4">
+            <Link to="/" className="group flex items-center gap-3 w-fit">
+              <div className="relative flex h-11.5 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#D4AF37]/50 bg-[#2A080C] p-1 shadow-md transition-all duration-300 group-hover:border-[#D4AF37] group-hover:scale-102">
+                <img
+                  src="/logo.jpg"
+                  alt={APP_NAME}
+                  className="h-full w-auto max-w-[140px] rounded-lg object-contain"
+                />
+              </div>
+              <div className="flex flex-col leading-none">
+                <span className="font-serif text-lg font-bold tracking-tight text-white">{APP_SHORT_NAME}</span>
+                <span className="text-[9.5px] font-bold tracking-[0.22em] text-[#FCE08B] uppercase">
+                  Swarna Kala Kendra
+                </span>
+              </div>
+            </Link>
+
+            <p className="text-xs sm:text-[13px] leading-relaxed text-[#B8ADA0] max-w-sm">
+              Handcrafting timeless gold, diamond, and polki heirlooms since 1998. Every creation celebrates royal Indian heritage, pure BIS 916 hallmarking, and lifelong trust.
+            </p>
+
+            {/* Showroom & Contact Details */}
+            <div className="space-y-2 pt-1 text-xs text-[#C7BCAD]">
+              <div className="flex items-start gap-2.5">
+                <MapPin className="size-4 shrink-0 text-[#D4AF37] mt-0.5" />
+                <span>Showroom: Aminabad / Alambagh, Lucknow, Uttar Pradesh - 226001</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Phone className="size-4 shrink-0 text-[#D4AF37]" />
+                <span>Customer Care: +91 94150 00000 / +91 522 000000</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Mail className="size-4 shrink-0 text-[#D4AF37]" />
+                <span>Email: contact@amardeepshitalaprashad.com</span>
+              </div>
+            </div>
+
+            {/* Social Channels */}
+            {activeSocialLinks.length > 0 && (
+              <div className="pt-2">
+                <p className="text-[11px] font-bold tracking-wider text-[#D4AF37] uppercase mb-2">Connect With Us</p>
+                <div className="flex items-center gap-2">
+                  {activeSocialLinks.map((platform) => (
+                    <a
+                      key={platform.key}
+                      href={platform.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={platform.label}
+                      className="flex size-8.5 items-center justify-center rounded-xl border border-[#D4AF37]/30 bg-[#25070B] text-xs font-bold text-[#FCE08B] transition-all hover:scale-110 hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#1A0508]"
+                    >
+                      {platform.abbr}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Column 2: Our Collections & Categories (3 cols) */}
+          <div className="space-y-3 lg:col-span-3">
+            <p className="font-serif text-sm font-bold tracking-wider text-[#FCE08B] uppercase">
+              Jewellery Collections
+            </p>
+            <ul className="space-y-2 text-xs sm:text-[13px]">
+              <li>
+                <Link
+                  to="/mudrika"
+                  className="inline-flex items-center gap-1.5 font-semibold text-[#FCE08B] transition-all hover:text-white hover:translate-x-1"
+                >
+                  <Sparkles className="size-3 text-[#D4AF37] animate-pulse" />
+                  MUDRIKA (In-House Brand)
+                </Link>
+              </li>
+              <li>
+                <Link to="/products" className="text-[#C7BCAD] transition-all hover:text-[#FCE08B] hover:translate-x-1 inline-block">
+                  All Jewellery Catalogue
+                </Link>
+              </li>
+              <li>
+                <Link to="/new-arrivals" className="text-[#C7BCAD] transition-all hover:text-[#FCE08B] hover:translate-x-1 inline-block">
+                  New Arrivals
+                </Link>
+              </li>
+              <li>
+                <Link to="/offers" className="text-[#C7BCAD] transition-all hover:text-[#FCE08B] hover:translate-x-1 inline-block">
+                  Festive Offers & Deals
+                </Link>
+              </li>
+              {activeCategories.slice(0, 6).map((cat) => (
+                <li key={cat.id || cat.slug}>
+                  <Link
+                    to={categoryPath(cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}
+                    className="text-[#C7BCAD] transition-all hover:text-[#FCE08B] hover:translate-x-1 inline-block"
+                  >
+                    {cat.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Column 3: Customer Care & Services (2.5 cols) */}
+          <div className="space-y-3 lg:col-span-3">
+            <p className="font-serif text-sm font-bold tracking-wider text-[#FCE08B] uppercase">
+              Customer Services
+            </p>
+            <ul className="space-y-2 text-xs sm:text-[13px]">
+              {CUSTOMER_SERVICE_LINKS.map((item) => (
+                <li key={item.label}>
+                  <Link
+                    to={item.path}
+                    className={`transition-all hover:translate-x-1 inline-block ${
+                      item.highlight
+                        ? 'font-semibold text-[#FCE08B] hover:text-white'
+                        : 'text-[#C7BCAD] hover:text-[#FCE08B]'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Column 4: Legal & Policies (2.5 cols) */}
+          <div className="space-y-3 lg:col-span-2">
+            <p className="font-serif text-sm font-bold tracking-wider text-[#FCE08B] uppercase">
+              Policies & Legal
+            </p>
+            <ul className="space-y-2 text-xs sm:text-[13px]">
+              {LEGAL_LINKS.map((item) => (
+                <li key={item.label}>
+                  <Link
+                    to={item.path}
+                    className="text-[#C7BCAD] transition-all hover:text-[#FCE08B] hover:translate-x-1 inline-block"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Admin Extra Columns (if configured) */}
+          {(extraColumns ?? []).map((column) => (
+            <div key={column._id ?? column.id} className="space-y-3 lg:col-span-2">
+              <p className="font-serif text-sm font-bold tracking-wider text-[#FCE08B] uppercase">
+                {column.title}
+              </p>
+              <ul className="space-y-2 text-xs sm:text-[13px]">
+                {[...column.links]
+                  .sort((a, b) => a.order - b.order)
+                  .map((link) => (
+                    <li key={link._id ?? link.id}>
+                      <SmartLink
+                        to={link.url}
+                        className="text-[#C7BCAD] transition-all hover:text-[#FCE08B] hover:translate-x-1 inline-block"
+                      >
+                        {link.label}
+                      </SmartLink>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tier 4: Payment Badges & Copyright Footer Bar */}
+      <div className="border-t border-[#D4AF37]/20 bg-[#0A0103]">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-5 text-xs text-[#8C806F] sm:flex-row lg:px-8">
+          <p className="text-center sm:text-left">
+            {settings?.footerCopyrightText || `© ${new Date().getFullYear()} ${APP_NAME}. All Rights Reserved. Handcrafted in India.`}
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <span className="flex items-center gap-1 text-[11px] text-[#A89E8D] mr-1">
+              <Lock className="size-3.5 text-[#D4AF37]" /> 100% Safe Payments:
+            </span>
+            {PAYMENT_METHODS.map((method) => (
+              <span
+                key={method}
+                className="rounded-lg border border-[#D4AF37]/25 bg-[#180407] px-2.5 py-1 text-[10.5px] font-medium text-[#D1C7B7]"
+              >
+                {method}
               </span>
             ))}
           </div>

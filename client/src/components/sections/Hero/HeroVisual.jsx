@@ -8,12 +8,7 @@ import { Sparkles } from 'lucide-react';
 // <img> when it doesn't.
 export function HeroVisual({ image }) {
   if (image) {
-    // object-bottom, not center - a wide hero box cropping a less-wide
-    // upload tends to cut off the top of the frame, not the bottom, for
-    // most "dramatic" jewellery/product photography (subject weighted
-    // toward the lower half). Not a substitute for a real focal-point
-    // control, but a much better default than a center crop.
-    return <img src={image.secureUrl} alt={image.altText || ''} className="size-full object-cover object-bottom" />;
+    return <img src={image.secureUrl} alt={image.altText || ''} className="size-full object-cover object-top" />;
   }
 
   return (
