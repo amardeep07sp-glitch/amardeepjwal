@@ -9,7 +9,13 @@ import { create } from 'zustand';
 // via `bootstrap()` below. `isInitializing` gates the header's logged-in-vs-
 // signed-out render until that one silent check resolves, so a returning
 // visitor never flashes "Sign in" before flipping to their name.
-const BASE_URL = '/api/v1/auth';
+// Same VITE_API_BASE_URL override as lib/api.js - this file has its own
+// fetch implementation (never goes through api.js) so it needs the exact
+// same env-aware base, or login/register/refresh would keep hitting this
+// app's own domain instead of the real backend on any deployment where
+// they're on different origins (see api.js's own comment for when that's
+// needed).
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/auth`;
 
 // The real refresh token itself is an httpOnly cookie (JS can never read
 // it, by design), so there's no way to check "is there actually a session

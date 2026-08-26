@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 
-const BASE_URL = '/api/v1/auth';
+// Same VITE_API_BASE_URL override as lib/api.js - this file has its own
+// fetch implementation (never goes through api.js) so it needs the exact
+// same env-aware base, or login/register/refresh would keep hitting this
+// app's own domain instead of the real backend on any deployment where
+// they're on different origins (e.g. this admin panel on Vercel, backend
+// elsewhere).
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/auth`;
 
 // Same optimization as the storefront's own authStore.js - the real
 // refresh token is an httpOnly cookie JS can never read, so without this

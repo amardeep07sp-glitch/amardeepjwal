@@ -8,8 +8,13 @@ import { useAuthStore } from '@/store/authStore';
 // location are resolved server-side (User-Agent header, IP), so this SDK
 // only ever sends what's genuinely client-only (screen/language/timezone/
 // network) plus the event's own identity and payload.
-const TRACK_URL = '/api/v1/cip/events/track';
-const SESSION_END_URL = (sessionId) => `/api/v1/cip/sessions/${sessionId}/end`;
+// Same VITE_API_BASE_URL override as lib/api.js - this file fetches/beacons
+// directly rather than going through api.js, so it needs the same
+// env-aware base independently (otherwise these hit this app's own domain
+// instead of the real backend whenever they're on different origins).
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const TRACK_URL = `${API_BASE}/cip/events/track`;
+const SESSION_END_URL = (sessionId) => `${API_BASE}/cip/sessions/${sessionId}/end`;
 
 const VISITOR_ID_KEY = 'adsp_visitor_id';
 const SESSION_ID_KEY = 'adsp_session_id';

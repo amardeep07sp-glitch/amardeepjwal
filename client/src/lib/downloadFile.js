@@ -1,6 +1,9 @@
 import { useAuthStore } from '@/store/authStore';
 
-const BASE_URL = '/api/v1';
+// Same VITE_API_BASE_URL override as api.js - this file has its own fetch
+// call (a file download can't reuse api.js's JSON-only request()), so it
+// needs the same env-aware base independently.
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 // Streams a file response (the invoice PDF today) and triggers a browser
 // download. Kept separate from api.js's request() since that helper always
