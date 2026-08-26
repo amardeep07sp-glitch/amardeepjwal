@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/sitemap.xml", "destination": "https://api.amardeepshitalaprashad.com/sitemap.xml" },
+    { "source": "/robots.txt", "destination": "https://api.amardeepshitalaprashad.com/robots.txt" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
