@@ -86,6 +86,16 @@ app.get('/health', (req, res) => {
   res.status(200).json({ success: true, message: 'API is healthy', timestamp: new Date().toISOString() });
 });
 
+// This API's own domain root has nothing for a browser to render (the real
+// storefront/admin are separate apps) - but Render/most hosts ping "/" by
+// default as their health check, which would otherwise 404 and log as an
+// error on every deploy. A plain 200 here is what that check actually
+// wants; anyone hitting this in a browser gets a clear "this is an API"
+// message instead of a confusing 404.
+app.get('/', (req, res) => {
+  res.status(200).json({ success: true, message: 'Amardeep Swarna Kala Kendra API is running' });
+});
+
 app.use(notFound);
 app.use(errorHandler);
 
