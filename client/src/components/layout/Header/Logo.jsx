@@ -1,7 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Gem } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { APP_SHORT_NAME } from '@/config/appConfig';
 
 // Playfair Display is reserved for customer-website branding (per
 // src/index.css's own convention) - this is the one place on the
@@ -12,24 +10,30 @@ import { APP_SHORT_NAME } from '@/config/appConfig';
 // able to shrink and truncate, or the whole header overflows horizontally.
 // Only the icon circle stays a fixed size; the caption line drops below
 // `sm` entirely rather than fighting for space it doesn't have.
-export function Logo({ className }) {
+export function Logo({ className, showText = true }) {
   return (
     <Link
       to="/"
-      className={cn('flex min-w-0 items-center gap-2 sm:gap-2.5', className)}
+      className={cn('group flex min-w-0 items-center gap-2.5 sm:gap-3 transition-transform active:scale-98', className)}
       aria-label="Amardeep Swarna Kala Kendra - Home"
     >
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/30 sm:size-10">
-        <Gem className="size-4.5 sm:size-5" />
-      </span>
-      <span className="flex min-w-0 flex-col leading-none">
-        <span className="truncate font-display text-lg font-bold tracking-wide text-heading sm:text-xl">
-          {APP_SHORT_NAME}
+      <div className="relative flex h-10 sm:h-11.5 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#2A080C] ring-1 ring-[#D4AF37]/40 shadow-xs transition-all duration-300 group-hover:ring-[#D4AF37] group-hover:shadow-md group-hover:shadow-amber-950/15">
+        <img
+          src="/logo.jpg"
+          alt="Amardeep Shitala Prasad"
+          className="h-full w-auto max-w-[130px] sm:max-w-[155px] object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+        />
+      </div>
+      {showText && (
+        <span className="hidden min-w-0 flex-col leading-none md:flex">
+          <span className="truncate font-display text-base font-bold tracking-tight text-[#1E0508] sm:text-lg">
+            Amardeep
+          </span>
+          <span className="truncate text-[9.5px] font-semibold tracking-[0.2em] text-[#9A6B12] uppercase">
+            Swarna Kala Kendra
+          </span>
         </span>
-        <span className="hidden truncate text-[10px] font-medium tracking-[0.2em] text-muted-foreground uppercase sm:block">
-          Swarna Kala Kendra
-        </span>
-      </span>
+      )}
     </Link>
   );
 }

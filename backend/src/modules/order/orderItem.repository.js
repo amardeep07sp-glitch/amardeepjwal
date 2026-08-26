@@ -1,5 +1,8 @@
 import { OrderItem } from './orderItem.model.js';
-import { ORDER_ITEM_STATUSES } from './order.constants.js';
+import { Order } from './order.model.js';
+import { ORDER_ITEM_STATUSES, ORDER_STATUSES } from './order.constants.js';
+
+const RECEIVED_STATUSES = [ORDER_STATUSES.DELIVERED, ORDER_STATUSES.PARTIALLY_DELIVERED, ORDER_STATUSES.COMPLETED];
 
 export const orderItemRepository = {
   findByOrder(orderId, session) {
@@ -63,5 +66,15 @@ export const orderItemRepository = {
       { $sort: { unitsSold: -1 } },
       { $limit: limit },
     ]);
+  },
+
+  // The "Verified Purchase" check for review.service.js - real proof the
+  // reviewing customer actually received this exact product, not just
+  // ordered it (a cancelled-before-delivery order doesn't count).
+  async existsDeliveredForCustomerAndProduct(customerId, productId) {
+    const orderIds = await Order.find({ customer: customerId, orderStatus: { $in: RECEIVED_STATUSES } }).distinct('_id');
+    if (orderIds.length === 0) return false;
+    const count = await OrderItem.countDocuments({ order: { $in: orderIds }, product: productId });
+    return count > 0;
   },
 };

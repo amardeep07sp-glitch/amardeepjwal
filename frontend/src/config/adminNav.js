@@ -3,6 +3,7 @@ import {
   Gem,
   Tags,
   Layers,
+  MapPin,
   Award,
   ListTree,
   SlidersHorizontal,
@@ -42,6 +43,14 @@ import {
   Megaphone,
   Ticket,
   ReceiptText,
+  Star,
+  Coins,
+  Gift,
+  HelpCircle,
+  LifeBuoy,
+  Flag,
+  MessageSquare,
+  Send,
 } from 'lucide-react';
 
 // Single source of truth for the admin sidebar and breadcrumb labels.
@@ -92,6 +101,12 @@ export const ADMIN_NAV_ITEMS = [
     label: 'Attributes',
     path: '/admin/catalog/attributes',
     icon: SlidersHorizontal,
+    group: 'Catalog',
+  },
+  {
+    label: 'Metal Rates',
+    path: '/admin/metal-rates',
+    icon: Coins,
     group: 'Catalog',
   },
   {
@@ -209,15 +224,33 @@ export const ADMIN_NAV_ITEMS = [
     group: 'Orders',
   },
   {
+    label: 'Campaigns',
+    path: '/admin/campaigns',
+    icon: Gift,
+    group: 'Orders',
+  },
+  {
     label: 'Coupons',
     path: '/admin/coupons',
     icon: Ticket,
     group: 'Orders',
   },
   {
+    label: 'Redemptions',
+    path: '/admin/coupons/redemptions',
+    icon: BarChart3,
+    group: 'Orders',
+  },
+  {
     label: 'Invoices',
     path: '/admin/invoices',
     icon: ReceiptText,
+    group: 'Orders',
+  },
+  {
+    label: 'Reviews',
+    path: '/admin/reviews',
+    icon: Star,
     group: 'Orders',
   },
   {
@@ -335,6 +368,12 @@ export const ADMIN_NAV_ITEMS = [
     group: 'Customer Intelligence',
   },
   {
+    label: 'Location Intelligence',
+    path: '/admin/cip/locations',
+    icon: MapPin,
+    group: 'Customer Intelligence',
+  },
+  {
     label: 'Segments',
     path: '/admin/cip/segments',
     icon: Users2,
@@ -345,5 +384,53 @@ export const ADMIN_NAV_ITEMS = [
     path: '/admin/cip/campaign-spend',
     icon: Megaphone,
     group: 'Customer Intelligence',
+  },
+  {
+    label: 'Broadcast',
+    path: '/admin/broadcast',
+    icon: Send,
+    group: 'Customer Intelligence',
+  },
+  {
+    label: 'Help Center',
+    path: '/admin/help/articles',
+    icon: HelpCircle,
+    group: 'Support',
+  },
+  {
+    label: 'Tickets',
+    path: '/admin/support/tickets',
+    icon: LifeBuoy,
+    group: 'Support',
+  },
+  {
+    label: 'Issue Reports',
+    path: '/admin/issues',
+    icon: Flag,
+    group: 'Support',
+  },
+  {
+    label: 'Feedback',
+    path: '/admin/feedback',
+    icon: MessageSquare,
+    group: 'Support',
+  },
+  {
+    label: 'Help Categories',
+    path: '/admin/help/categories',
+    icon: LayoutGrid,
+    group: 'Support',
+  },
+  {
+    label: 'Search Analytics',
+    path: '/admin/help/search-analytics',
+    icon: BarChart3,
+    group: 'Support',
+  },
+  {
+    label: 'Support Settings',
+    path: '/admin/support/settings',
+    icon: SlidersHorizontal,
+    group: 'Support',
   },
 ];

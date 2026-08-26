@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { NavLink } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, ChevronDown, Gem, LayoutGrid } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronRight, LayoutGrid, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavbarCategories } from '@/features/categories/categoriesApi';
+import { usePublicNavbarItems } from '@/features/navbar/navbarApi';
 import { useProductFacets, useProductList } from '@/features/products/productsApi';
+import { SmartLink } from '@/components/global/SmartLink';
 import { NAV_EXTRA_AFTER, NAV_EXTRA_BEFORE, categoryPath } from '@/config/navConfig';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -94,7 +96,7 @@ function CategoryLinkThumb({ media }) {
   }
   return (
     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#FFF9EF] text-[#C8A24D]">
-      <Gem className="size-3.5" />
+      <Sparkles className="size-3.5" />
     </span>
   );
 }
@@ -171,7 +173,7 @@ function CategoryProductPreview({ categorySlug, ctaPath }) {
                 />
               ) : (
                 <div className="flex size-full items-center justify-center text-[#C8A24D]">
-                  <Gem className="size-6" />
+                  <Sparkles className="size-6" />
                 </div>
               )}
             </div>
@@ -363,6 +365,7 @@ function CategoryMegaMenuPanel({ megaMenu }) {
 // the whole header.
 export function CategoryNav() {
   const { data: categories } = useNavbarCategories();
+  const { data: customItems } = usePublicNavbarItems();
   const [openIndex, setOpenIndex] = useState(null);
   const [menuRect, setMenuRect] = useState(null);
   const closeTimer = useRef(null);
@@ -407,99 +410,136 @@ export function CategoryNav() {
   return (
     <nav
       ref={navRef}
-      className="relative hidden border-b border-[#E9DFC8] bg-white/95 backdrop-blur-md lg:block"
+      className="relative hidden border-b border-[#EFE7D8] bg-[#FCFAF6] lg:block"
       onMouseLeave={scheduleClose}
     >
-      <div className="mx-auto flex max-w-7xl items-stretch px-6 lg:px-8">
-        {/* Shop By Category - pinned left, never part of the scrolling
-            strip below, so it stays reachable no matter how many
-            categories exist. */}
+      <div className="mx-auto flex max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+        {/* Shop By Category Button */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className=" cursor-pointer font-nav flex shrink-0 items-center gap-2 border-r border-[#EFE6D3] px-5 py-4 text-sm font-light tracking-wide whitespace-nowrap text-[#3F3A33] transition-all duration-300 hover:bg-[#FFF9EF] hover:text-[#C8A24D]"
+              className="cursor-pointer font-nav my-1.5 mr-2 flex shrink-0 items-center gap-2 rounded-lg border border-[#EAE0CD] bg-white px-3.5 py-1.5 text-xs font-medium text-[#2B1B0E] shadow-xs transition-all duration-200 hover:border-[#C8A24D] hover:bg-[#FFF9EF] hover:text-[#9A6B12]"
             >
-              <LayoutGrid className="size-4" />
+              <LayoutGrid className="size-3.5 text-[#C8A24D]" />
               Shop by Category
+              <ChevronDown className="size-3 text-[#9A9180]" />
             </button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
             align="start"
-            className="w-64 rounded-xl border border-[#EFE6D3] bg-white p-2 shadow-[0_15px_45px_rgba(0,0,0,0.08)]"
+            className="w-64 rounded-2xl border border-[#EFE7D8] bg-white p-2 shadow-[0_15px_45px_rgba(0,0,0,0.08)]"
           >
             {(categories ?? []).map((cat) => (
               <DropdownMenuItem
                 key={cat.id}
                 asChild
-                className="rounded-lg transition-colors focus:bg-[#FFF9EF]"
+                className="rounded-xl transition-colors focus:bg-[#FFF9EF]"
               >
                 <NavLink
                   to={categoryPath(cat.slug)}
-                  className="font-nav w-full rounded-lg px-3 py-2 text-sm font-light text-[#3F3A33] transition-all duration-300 hover:text-[#C8A24D]"
+                  className="font-nav flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium text-[#3F3A33] transition-all duration-200 hover:text-[#9A6B12]"
                 >
                   {cat.name}
+                  <ChevronRight className="size-3 text-[#C8A24D]/60" />
                 </NavLink>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Main Navigation - a wide category list (many nav items at once)
-            used to overflow max-w-7xl and silently break the header's
-            layout at 1024-1280px. Scrolls horizontally instead now, with a
-            fading right edge as a "there's more" affordance, rather than
-            wrapping or forcing the page wider than the viewport. */}
+        <div className="h-5 w-px bg-[#EFE7D8] mr-2" />
+
+        {/* Main Navigation Items */}
         <div className="relative min-w-0 flex-1">
-          <ul className="scrollbar-none flex items-stretch overflow-x-auto">
-            {navItems.map((item, index) => (
-              <li
-                key={item.path}
-                className="relative"
-                onMouseEnter={() => item.megaMenu && openMenu(index)}
-              >
-                <NavLink
-                  to={item.path}
-                  onFocus={() => item.megaMenu && openMenu(index)}
-                  className={({ isActive }) =>
-                    cn(
-                      "font-nav relative flex h-full items-center gap-1.5 px-5 py-4 text-sm font-light whitespace-nowrap text-[#3F3A33] transition-all duration-300 hover:bg-[#FFF9EF] hover:text-[#C8A24D]",
+          <ul className="scrollbar-none flex items-center overflow-x-auto gap-0.5 sm:gap-1 py-1">
+            {navItems.map((item, index) => {
+              const isMudrika = item.path === '/mudrika';
 
-                      isActive &&
-                      "text-[#B88A2F] after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:rounded-full after:bg-[#C8A24D]",
+              if (isMudrika) {
+                return (
+                  <li key={item.path} className="shrink-0 mx-1">
+                    <NavLink
+                      to={item.path}
+                      className={({ isActive }) =>
+                        cn(
+                          "inline-flex items-center gap-1.5 rounded-full bg-linear-to-r from-[#2A080C] via-[#3E0C12] to-[#1A0407] px-3.5 py-1 text-xs font-semibold tracking-wide text-[#FCE08B] border border-[#D4AF37]/50 shadow-xs transition-all duration-200 hover:scale-105 hover:border-[#D4AF37] hover:text-white",
+                          isActive && "ring-2 ring-[#D4AF37] text-white shadow-md shadow-amber-950/20"
+                        )
+                      }
+                    >
+                      <Sparkles className="size-3 text-[#FCE08B] animate-pulse" />
+                      <span>MUDRIKA</span>
+                      <span className="rounded-full bg-[#D4AF37]/30 px-1.5 py-0.2 text-[8.5px] font-bold text-[#FCE08B] tracking-wider uppercase">
+                        Brand
+                      </span>
+                    </NavLink>
+                  </li>
+                );
+              }
 
-                      item.highlight && "text-[#B88A2F]"
-                    )
-                  }
+              return (
+                <li
+                  key={item.path}
+                  className="relative shrink-0"
+                  onMouseEnter={() => item.megaMenu && openMenu(index)}
                 >
-                  {item.icon && <item.icon className="size-3.5 text-[#B88A2F]/70" />}
+                  <NavLink
+                    to={item.path}
+                    onFocus={() => item.megaMenu && openMenu(index)}
+                    className={({ isActive }) =>
+                      cn(
+                        "font-nav relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs sm:text-[13px] font-medium whitespace-nowrap text-[#4A443A] transition-all duration-200 hover:bg-[#FAF6EE] hover:text-[#9A6B12]",
+
+                        isActive &&
+                        "text-[#9A6B12] font-semibold bg-[#FAF4E6]",
+
+                        item.highlight && !isActive && "text-[#9A6B12]"
+                      )
+                    }
+                  >
+                    {item.icon && <item.icon className="size-3.5 text-[#B88A2F]/70" />}
+                    {item.label}
+
+                    {item.megaMenu && (
+                      <ChevronDown
+                        className={cn(
+                          "size-3 transition-all duration-200",
+                          openIndex === index
+                            ? "rotate-180 text-[#C8A24D]"
+                            : "text-[#9A9180]"
+                        )}
+                      />
+                    )}
+
+                    {item.badge && (
+                      <Badge className="ml-1 h-4.5 rounded-full bg-[#C8A24D] px-1.5 text-[8.5px] font-semibold text-white shadow-xs">
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </NavLink>
+                </li>
+              );
+            })}
+
+            {/* Admin Custom Items */}
+            {(customItems ?? []).map((item) => (
+              <li key={item.id} className="shrink-0">
+                <SmartLink
+                  to={item.path}
+                  target={item.openInNewTab ? '_blank' : undefined}
+                  rel={item.openInNewTab ? 'noopener noreferrer' : undefined}
+                  className="font-nav flex items-center rounded-lg px-3 py-1.5 text-xs sm:text-[13px] font-medium whitespace-nowrap text-[#4A443A] transition-all duration-200 hover:bg-[#FAF6EE] hover:text-[#9A6B12]"
+                >
                   {item.label}
-
-                  {item.megaMenu && (
-                    <ChevronDown
-                      className={cn(
-                        "size-3.5 transition-all duration-300",
-                        openIndex === index
-                          ? "rotate-180 text-[#C8A24D]"
-                          : "text-[#8A8378]"
-                      )}
-                    />
-                  )}
-
-                  {item.badge && (
-                    <Badge className="ml-1 h-5 rounded-full bg-[#C8A24D] px-2 text-[9px] font-semibold text-white shadow-sm">
-                      {item.badge}
-                    </Badge>
-                  )}
-                </NavLink>
+                </SmartLink>
               </li>
             ))}
           </ul>
 
-          {/* Fade hint - purely decorative, pointer-events-none so it never
-              blocks clicks/hover on the last real item underneath it. */}
-          <div className="pointer-events-none absolute top-0 right-0 h-full w-10 bg-linear-to-l from-white/95 to-transparent" />
+          {/* Fade hint */}
+          <div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-linear-to-l from-[#FCFAF6] to-transparent" />
         </div>
       </div>
 

@@ -5,6 +5,7 @@ export const BANNER_POSITIONS = [
   { value: 'homepage_hero', label: 'Homepage hero' },
   { value: 'homepage_secondary', label: 'Homepage secondary' },
   { value: 'sitewide_announcement', label: 'Sitewide announcement' },
+  { value: 'popup_ad', label: 'Popup ad (shown once per visit)' },
 ];
 
 export const bannerSchema = z.object({

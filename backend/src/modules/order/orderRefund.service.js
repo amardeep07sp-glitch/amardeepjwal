@@ -6,7 +6,38 @@ import { orderPaymentRepository } from './orderPayment.repository.js';
 import { orderAudit } from './order.audit.js';
 import { orderNotifications } from './order.notifications.js';
 import { accountingEvents } from '../accounting/accountingEvents.service.js';
+import { razorpayService } from './razorpay.service.js';
+import { logger } from '../../config/logger.js';
 import { PAYMENT_STATUSES, REFUND_STATUSES, ORDER_TIMELINE_EVENTS } from './order.constants.js';
+
+// Real gateway refund, not just a status flip - only when the order was
+// actually paid through Razorpay (a real gatewayPaymentId on file) AND the
+// gateway is configured. Returns null (never throws) for a COD/manual
+// order, which stays exactly the "admin-attested" flow it already was -
+// there's no gateway transaction to reverse for those. Throwing here (a
+// configured gateway that REJECTS the refund call) is deliberate: the
+// caller must never mark a refund COMPLETED when the money didn't
+// actually move.
+async function attemptGatewayRefund(order, refund) {
+  const payments = await orderPaymentRepository.findByOrder(order._id);
+  const gatewayPayment = payments.find((p) => p.status === 'paid' && p.gatewayPaymentId);
+  if (!gatewayPayment) return null;
+
+  if (!razorpayService.isConfigured()) {
+    logger.warn(
+      { orderId: order._id, orderNumber: order.orderNumber, refundId: refund._id },
+      'Refund is against a Razorpay-paid order but Razorpay is not configured (see apikey.todo) - falling back to a manual/status-only refund. The admin must issue this refund directly in the Razorpay dashboard.'
+    );
+    return null;
+  }
+
+  const result = await razorpayService.refundPayment({
+    paymentId: gatewayPayment.gatewayPaymentId,
+    amount: refund.amount,
+    notes: { orderNumber: order.orderNumber, refundId: refund._id.toString() },
+  });
+  return result.id;
+}
 
 const buildPaginationMeta = (page, limit, totalItems) => ({
   page,
@@ -53,8 +84,23 @@ export const orderRefundService = {
 
   // Marks the refund completed and rolls Order.paymentStatus up to
   // 'refunded' (fully) or 'partially_refunded' - transactional since it
-  // touches both OrderRefund and Order together.
+  // touches both OrderRefund and Order together. The real Razorpay refund
+  // call (if any) happens BEFORE the transaction starts, deliberately - an
+  // external HTTP call has no business holding a DB transaction open, and
+  // if it throws, nothing has been written yet to roll back.
   async processRefund(refundId, { refundReference }, userId) {
+    const preCheckRefund = await orderRefundRepository.findById(refundId);
+    if (!preCheckRefund) throw new ApiError(404, 'Refund not found');
+    if (preCheckRefund.status !== REFUND_STATUSES.PENDING) {
+      throw new ApiError(400, `Refund is already ${preCheckRefund.status}`);
+    }
+    const preCheckOrder = await orderRepository.findRawById(preCheckRefund.order);
+    const gatewayRefundId = await attemptGatewayRefund(preCheckOrder, preCheckRefund);
+    // A real gateway refund ID always wins over whatever an admin typed in
+    // the "reference" field - that field only exists for the manual/COD
+    // path, where there's no gateway to ask.
+    const resolvedReference = gatewayRefundId ?? refundReference ?? '';
+
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
@@ -65,7 +111,7 @@ export const orderRefundService = {
       }
 
       refund.status = REFUND_STATUSES.COMPLETED;
-      refund.refundReference = refundReference || '';
+      refund.refundReference = resolvedReference;
       refund.processedBy = userId;
       await refund.save({ session });
 

@@ -6,6 +6,7 @@ import { orderAudit } from './order.audit.js';
 import { orderNotifications } from './order.notifications.js';
 import { razorpayService } from './razorpay.service.js';
 import { accountingEvents } from '../accounting/accountingEvents.service.js';
+import { supportAutomation } from '../support/supportAutomation.service.js';
 import { PAYMENT_STATUSES, ORDER_TIMELINE_EVENTS } from './order.constants.js';
 
 // Recomputes Order.paymentStatus from the sum of its 'paid' OrderPayment
@@ -138,19 +139,38 @@ export const orderPaymentService = {
   // controller (needs the raw body, which only the controller has access
   // to via req.rawBody) before this is ever called.
   async handleWebhookEvent(payload, userId = null) {
-    if (payload.event !== 'payment.captured' && payload.event !== 'payment.authorized') return;
-
     const paymentEntity = payload.payload?.payment?.entity;
     if (!paymentEntity) return;
 
-    await this.finalizeRazorpayPayment(
-      {
-        razorpayOrderId: paymentEntity.order_id,
-        razorpayPaymentId: paymentEntity.id,
-        razorpaySignature: null,
-      },
-      userId
-    );
+    if (payload.event === 'payment.captured' || payload.event === 'payment.authorized') {
+      await this.finalizeRazorpayPayment(
+        {
+          razorpayOrderId: paymentEntity.order_id,
+          razorpayPaymentId: paymentEntity.id,
+          razorpaySignature: null,
+        },
+        userId
+      );
+      return;
+    }
+
+    // Phase 59 automation - marks the still-PENDING OrderPayment row FAILED
+    // and flags a low-priority issue report for staff visibility, even if
+    // the customer never clicks "Report Payment Issue" themselves. A no-op
+    // if the payment was already resolved by the time this arrives (e.g.
+    // the verify-callback beat the webhook) - never overwrites a PAID row.
+    if (payload.event === 'payment.failed') {
+      const payment = await orderPaymentRepository.findByGatewayOrderId(paymentEntity.order_id);
+      if (!payment || payment.status !== PAYMENT_STATUSES.PENDING) return;
+
+      payment.status = PAYMENT_STATUSES.FAILED;
+      await payment.save();
+
+      const order = await orderRepository.findRawById(payment.order);
+      if (order) {
+        await supportAutomation.onPaymentFailed({ orderId: order._id, customerId: order.customer, orderNumber: order.orderNumber });
+      }
+    }
   },
 
   // THE idempotent core both payment-confirmation paths funnel through -

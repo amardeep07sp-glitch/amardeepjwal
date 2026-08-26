@@ -43,7 +43,7 @@ export function ImageGallery({ images, name, badgeLabel, productId }) {
                 activeIndex === index ? 'ring-primary' : 'ring-border hover:ring-primary/50'
               )}
             >
-              <img src={image.thumbnailUrl || image.secureUrl} alt="" className="size-full object-cover" />
+              <img src={image.thumbnailUrl || image.secureUrl} alt="" className="size-full object-contain" />
             </button>
           ))}
         </div>
@@ -62,7 +62,7 @@ export function ImageGallery({ images, name, badgeLabel, productId }) {
           <img
             src={active.secureUrl}
             alt={active.altText || name}
-            className="size-full object-cover transition-transform duration-200 ease-out"
+            className="size-full object-contain transition-transform duration-200 ease-out"
             style={{ transformOrigin: zoomOrigin, transform: isZoomed ? 'scale(1.9)' : 'scale(1)' }}
           />
         ) : (

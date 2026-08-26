@@ -6,6 +6,10 @@ export const footerColumnService = {
     return footerColumnRepository.findAll();
   },
 
+  listPublicColumns() {
+    return footerColumnRepository.findActive();
+  },
+
   createColumn(data) {
     return footerColumnRepository.create(data);
   },

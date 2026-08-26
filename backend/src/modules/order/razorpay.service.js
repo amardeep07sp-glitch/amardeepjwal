@@ -42,4 +42,19 @@ export const razorpayService = {
       env.RAZORPAY_KEY_SECRET
     );
   },
+
+  // Real money movement, not a status flip - called from
+  // orderRefund.service.js#processRefund only when the order's payment
+  // actually went through Razorpay (has a gatewayPaymentId). Throws if
+  // unconfigured or the gateway itself rejects it, deliberately - a caller
+  // must never mark a refund COMPLETED off the back of a call that didn't
+  // really happen.
+  async refundPayment({ paymentId, amount, notes }) {
+    if (!razorpayClient) throw new ApiError(503, 'Razorpay is not configured on this server');
+    return razorpayClient.payments.refund(paymentId, {
+      amount: Math.round(amount * 100),
+      speed: 'normal',
+      notes,
+    });
+  },
 };

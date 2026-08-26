@@ -29,6 +29,27 @@ export const useRecomputeSegments = () => {
   });
 };
 
+// Location Intelligence (login GPS points, login/order state breakdowns)
+export const useLoginLocationPoints = (options = {}) =>
+  useQuery({ queryKey: ['cip-locations', 'logins', 'points'], queryFn: async () => (await api.get('/cip/reports/locations/logins')).data, ...options });
+
+export const useLoginLocationStates = (options = {}) =>
+  useQuery({ queryKey: ['cip-locations', 'logins', 'states'], queryFn: async () => (await api.get('/cip/reports/locations/logins/states')).data, ...options });
+
+export const useOrderLocationStates = (params = {}, options = {}) =>
+  useQuery({
+    queryKey: ['cip-locations', 'orders', 'states', params],
+    queryFn: async () => (await api.get('/cip/reports/locations/orders/states', { params })).data,
+    ...options,
+  });
+
+export const useVisitLocationReport = (params = {}, options = {}) =>
+  useQuery({
+    queryKey: ['cip-locations', 'visits', params],
+    queryFn: async () => (await api.get('/cip/reports/locations', { params })).data,
+    ...options,
+  });
+
 // Campaign spend (for ROAS)
 export const useCampaignSpend = (options = {}) =>
   useQuery({ queryKey: ['cip-campaign-spend'], queryFn: async () => (await api.get('/cip/campaign-spend')).data, ...options });

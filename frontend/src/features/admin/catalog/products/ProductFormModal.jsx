@@ -31,6 +31,9 @@ import {
   CATALOG_STATUSES,
   GENDERS,
   OCCASIONS,
+  METALS,
+  PURITIES_BY_METAL,
+  GEMSTONE_TYPES,
   NO_RELATION_VALUE,
   splitCommaList,
   joinCommaList,
@@ -89,6 +92,9 @@ export function ProductFormModal({ open, onOpenChange, product }) {
               searchKeywordsInput: joinCommaList(product.searchKeywords),
               gender: product.gender ?? NO_RELATION_VALUE,
               occasion: product.occasion ?? [],
+              metal: product.metal ?? NO_RELATION_VALUE,
+              purity: product.purity ?? '',
+              gemstoneType: product.gemstoneType ?? 'none',
             }
           : productFormDefaults
       );
@@ -123,6 +129,10 @@ export function ProductFormModal({ open, onOpenChange, product }) {
       brand: values.brand === NO_RELATION_VALUE ? null : values.brand,
       collectionId: values.collectionId === NO_RELATION_VALUE ? null : values.collectionId,
       gender: values.gender === NO_RELATION_VALUE ? null : values.gender,
+      metal: values.metal === NO_RELATION_VALUE ? null : values.metal,
+      // Purity only means something alongside a metal - clearing metal
+      // clears any stale purity value rather than silently keeping it.
+      purity: values.metal === NO_RELATION_VALUE ? '' : values.purity,
       tags: splitCommaList(tagsInput ?? ''),
       searchKeywords: splitCommaList(searchKeywordsInput ?? ''),
       seo: { ...values.seo, ogImageMedia: toMediaIdForSubmit(values.seo?.ogImageMedia) },
@@ -377,6 +387,87 @@ export function ProductFormModal({ open, onOpenChange, product }) {
                 )}
               />
             </FormField>
+
+            <Separator />
+            <SectionLabel>Jewellery Details</SectionLabel>
+            <p className="-mt-2 text-xs text-muted-foreground">
+              Real classification the promotion engine relies on (e.g. "20% off Gold") - not the optional Attribute system.
+            </p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <FormField label="Metal" htmlFor="metal">
+                <Controller
+                  name="metal"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        setValue('purity', '');
+                      }}
+                    >
+                      <SelectTrigger id="metal" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NO_RELATION_VALUE}>None</SelectItem>
+                        {METALS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </FormField>
+
+              <FormField label="Purity" htmlFor="purity">
+                <Controller
+                  name="purity"
+                  control={control}
+                  render={({ field }) => {
+                    const metalValue = watch('metal');
+                    const purityOptions = PURITIES_BY_METAL[metalValue] ?? [];
+                    return (
+                      <Select value={field.value} onValueChange={field.onChange} disabled={purityOptions.length === 0}>
+                        <SelectTrigger id="purity" className="w-full">
+                          <SelectValue placeholder={purityOptions.length ? 'Select purity' : 'Select a metal first'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {purityOptions.map((value) => (
+                            <SelectItem key={value} value={value}>
+                              {value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    );
+                  }}
+                />
+              </FormField>
+
+              <FormField label="Gemstone" htmlFor="gemstoneType">
+                <Controller
+                  name="gemstoneType"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger id="gemstoneType" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GEMSTONE_TYPES.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </FormField>
+            </div>
 
             <FormField label="Tags" htmlFor="tagsInput" description="Comma-separated">
               <Input id="tagsInput" placeholder="gold, bridal, lightweight" {...register('tagsInput')} />

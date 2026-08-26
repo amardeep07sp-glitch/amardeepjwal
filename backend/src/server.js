@@ -9,6 +9,9 @@ import { customerSegmentService } from './modules/customer/customerSegment.servi
 import { accountSeed } from './modules/accounting/account.seed.js';
 import { startCipJobs } from './modules/cip/cip.jobs.js';
 import { startCollectionJobs } from './modules/collection/collection.jobs.js';
+import { startSupportSlaSweep } from './modules/support/support.jobs.js';
+import { startAutomationSweeps } from './modules/support/automation.jobs.js';
+import { helpService } from './modules/help/help.service.js';
 
 let server;
 
@@ -33,6 +36,11 @@ const start = async () => {
   // discipline as the two calls above.
   await accountSeed.ensureSystemAccounts();
 
+  // Idempotent - seeds the fixed Help Center category rows (label/icon/
+  // order all admin-editable from there), same bootstrap discipline as
+  // the three calls above.
+  await helpService.ensureCategoriesSeeded();
+
   // Customer Intelligence Platform's background sweeps (stale sessions,
   // daily segmentation) - see cip.jobs.js.
   startCipJobs();
@@ -40,6 +48,14 @@ const start = async () => {
   // Collection Engine v2.0's scheduling sweep (auto-publish/auto-archive) -
   // see collection.jobs.js.
   startCollectionJobs();
+
+  // Support ticket SLA breach sweep - see support.jobs.js.
+  startSupportSlaSweep();
+
+  // Support automation sweeps (delayed refunds/deliveries) - see
+  // automation.jobs.js. Payment-failure automation is event-driven off the
+  // Razorpay webhook instead, not a sweep.
+  startAutomationSweeps();
 
   server = app.listen(env.PORT, () => {
     logger.info(`Server running in ${env.NODE_ENV} mode on port ${env.PORT}`);

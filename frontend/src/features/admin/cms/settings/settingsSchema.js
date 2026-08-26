@@ -1,6 +1,20 @@
 import { z } from 'zod';
 import { mediaRefSchema } from '../../media/mediaSchema';
 
+// Must match backend/src/constants/typography.js exactly - a curated,
+// pre-bundled (self-hosted, no Google Fonts CDN) allowlist, not free
+// text. See client/src/config/typography.js for the CSS side of this
+// same contract.
+export const HEADING_FONT_OPTIONS = [
+  { value: 'playfair-display', label: 'Playfair Display - Elegant Serif' },
+  { value: 'cormorant-garamond', label: 'Cormorant Garamond - Luxury Serif' },
+];
+
+export const BODY_FONT_OPTIONS = [
+  { value: 'inter', label: 'Inter - Modern Sans' },
+  { value: 'poppins', label: 'Poppins - Geometric Sans' },
+];
+
 export const settingsSchema = z.object({
   siteName: z.string().min(1, 'Site name is required'),
   siteTagline: z.string().optional(),
@@ -23,6 +37,10 @@ export const settingsSchema = z.object({
     metaTitle: z.string().optional(),
     metaDescription: z.string().optional(),
     ogImageMedia: mediaRefSchema,
+  }),
+  typography: z.object({
+    headingFont: z.enum(HEADING_FONT_OPTIONS.map((o) => o.value)),
+    bodyFont: z.enum(BODY_FONT_OPTIONS.map((o) => o.value)),
   }),
   legalBusinessName: z.string().optional(),
   gstin: z.string().optional(),
@@ -58,6 +76,7 @@ export const settingsFormDefaults = {
   footerCopyrightText: '',
   socialLinks: { facebook: '', instagram: '', twitter: '', youtube: '', pinterest: '' },
   seoDefaults: { metaTitle: '', metaDescription: '', ogImageMedia: null },
+  typography: { headingFont: 'playfair-display', bodyFont: 'inter' },
   legalBusinessName: '',
   gstin: '',
   panNumber: '',

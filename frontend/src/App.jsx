@@ -30,8 +30,12 @@ import OrderDetailPage from '@/features/admin/orders/OrderDetailPage';
 import ShipmentManagerPage from '@/features/admin/orders/ShipmentManagerPage';
 import ReturnManagerPage from '@/features/admin/orders/ReturnManagerPage';
 import RefundManagerPage from '@/features/admin/orders/RefundManagerPage';
+import CampaignsListPage from '@/features/admin/campaigns/CampaignsListPage';
 import CouponsListPage from '@/features/admin/coupons/CouponsListPage';
+import CouponRedemptionsPage from '@/features/admin/coupons/CouponRedemptionsPage';
 import InvoicesListPage from '@/features/admin/orders/InvoicesListPage';
+import ReviewsListPage from '@/features/admin/reviews/ReviewsListPage';
+import MetalRatesPage from '@/features/admin/metalRates/MetalRatesPage';
 import CustomerDashboardPage from '@/features/admin/customers/CustomerDashboardPage';
 import CustomersListPage from '@/features/admin/customers/CustomersListPage';
 import CustomerDetailPage from '@/features/admin/customers/CustomerDetailPage';
@@ -53,9 +57,19 @@ import ExpensesListPage from '@/features/admin/accounting/ExpensesListPage';
 import ExecutiveDashboardPage from '@/features/admin/reports/ExecutiveDashboardPage';
 import ReportsCenterPage from '@/features/admin/reports/ReportsCenterPage';
 import CipDashboardPage from '@/features/admin/cip/CipDashboardPage';
+import LocationIntelligencePage from '@/features/admin/cip/LocationIntelligencePage';
 import CipReportsPage from '@/features/admin/cip/CipReportsPage';
 import CipSegmentsPage from '@/features/admin/cip/CipSegmentsPage';
 import CipCampaignSpendPage from '@/features/admin/cip/CipCampaignSpendPage';
+import BroadcastComposePage from '@/features/admin/broadcast/BroadcastComposePage';
+import HelpArticlesListPage from '@/features/admin/help/HelpArticlesListPage';
+import HelpCategoriesPage from '@/features/admin/help/HelpCategoriesPage';
+import HelpSearchAnalyticsPage from '@/features/admin/help/HelpSearchAnalyticsPage';
+import SupportTicketsListPage from '@/features/admin/support/SupportTicketsListPage';
+import SupportTicketDetailPage from '@/features/admin/support/SupportTicketDetailPage';
+import SupportSettingsPage from '@/features/admin/support/SupportSettingsPage';
+import IssuesListPage from '@/features/admin/issues/IssuesListPage';
+import FeedbackListPage from '@/features/admin/feedback/FeedbackListPage';
 import ProtectedRoute from '@/routes/ProtectedRoute';
 import { ScrollToTop } from '@/routes/ScrollToTop';
 import NotFoundPage from '@/pages/errors/NotFoundPage';
@@ -105,8 +119,12 @@ export default function App() {
             <Route path="orders/refunds" element={<RefundManagerPage />} />
             <Route path="orders/:id" element={<OrderDetailPage />} />
             <Route path="orders" element={<OrdersListPage />} />
+            <Route path="campaigns" element={<CampaignsListPage />} />
             <Route path="coupons" element={<CouponsListPage />} />
+            <Route path="coupons/redemptions" element={<CouponRedemptionsPage />} />
             <Route path="invoices" element={<InvoicesListPage />} />
+            <Route path="reviews" element={<ReviewsListPage />} />
+            <Route path="metal-rates" element={<MetalRatesPage />} />
 
             <Route path="customers/dashboard" element={<CustomerDashboardPage />} />
             <Route path="customers/segments" element={<SegmentManagerPage />} />
@@ -133,9 +151,20 @@ export default function App() {
             <Route path="reports/center" element={<ReportsCenterPage />} />
 
             <Route path="cip/dashboard" element={<CipDashboardPage />} />
+            <Route path="cip/locations" element={<LocationIntelligencePage />} />
             <Route path="cip/reports" element={<CipReportsPage />} />
             <Route path="cip/segments" element={<CipSegmentsPage />} />
             <Route path="cip/campaign-spend" element={<CipCampaignSpendPage />} />
+            <Route path="broadcast" element={<BroadcastComposePage />} />
+
+            <Route path="help/articles" element={<HelpArticlesListPage />} />
+            <Route path="help/categories" element={<HelpCategoriesPage />} />
+            <Route path="help/search-analytics" element={<HelpSearchAnalyticsPage />} />
+            <Route path="support/tickets" element={<SupportTicketsListPage />} />
+            <Route path="support/tickets/:id" element={<SupportTicketDetailPage />} />
+            <Route path="support/settings" element={<SupportSettingsPage />} />
+            <Route path="issues" element={<IssuesListPage />} />
+            <Route path="feedback" element={<FeedbackListPage />} />
           </Route>
         </Route>
 

@@ -7,7 +7,7 @@ import { categoryPath } from '@/config/navConfig';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-const searchPath = (q) => `/search?q=${encodeURIComponent(q)}`;
+export const searchPath = (q) => `/search?q=${encodeURIComponent(q)}`;
 
 // 300ms - long enough that a fast typist doesn't fire a request per
 // keystroke, short enough that the dropdown still feels live. Re-debounces
@@ -99,7 +99,7 @@ export function SearchBar({ className, autoFocus = false, onSubmit }) {
 
   return (
     <form onSubmit={handleSubmit} role="search" className={cn('relative w-full', className)}>
-      <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-[#B88A2F]" />
       <Input
         name="q"
         type="search"
@@ -110,15 +110,15 @@ export function SearchBar({ className, autoFocus = false, onSubmit }) {
         onFocus={handleFocus}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        placeholder="Search for jewellery, collections..."
-        className="h-10 rounded-full pr-4 pl-10"
+        placeholder="Search for gold jewellery, Mudrika, rings, diamonds..."
+        className="h-10.5 rounded-full border border-[#E8DFC9] bg-[#FAF8F4] pr-4 pl-11 text-sm text-[#2B1B0E] placeholder:text-[#9A9180] transition-all duration-200 focus:border-[#C8A24D] focus:bg-white focus:ring-2 focus:ring-[#C8A24D]/20 shadow-inner/5"
         role="combobox"
         aria-expanded={showDropdown}
         aria-autocomplete="list"
       />
 
       {showDropdown && (
-        <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full overflow-hidden rounded-2xl border border-border bg-card shadow-[0_20px_50px_rgba(17,24,39,0.15)]">
+        <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full overflow-hidden rounded-2xl border border-[#EFE7D8] bg-white shadow-[0_20px_50px_rgba(27,15,5,0.12)]">
           {isFetching && !hasSuggestions ? (
             <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" /> Searching...

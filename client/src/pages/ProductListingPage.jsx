@@ -277,17 +277,17 @@ export default function ProductListingPage({ title, sortBy: fixedSortBy, onSale 
   const isSearchEmpty = Boolean(search) && isEmpty;
   const hasOtherFilters = Boolean(
     filters.categories.length || filters.brands.length || filters.tags.length || filters.gender || filters.occasion.length ||
-      filters.minPrice !== undefined || filters.maxPrice !== undefined
+    filters.minPrice !== undefined || filters.maxPrice !== undefined
   );
 
   return (
     <PageContainer top="sm" bottom="sm">
-      <div className="mb-3 flex flex-wrap items-center gap-2 sm:mb-4">
-        <BackButton />
+      <div className="sticky top-[60px] lg:top-[113px] z-40 -mx-4 mb-4 flex flex-wrap items-center gap-4 bg-background/95 px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+          <BackButton />
         <Breadcrumb items={[{ label: 'Home', to: '/' }, ...(slug ? [{ label: 'Shop', to: '/products' }] : []), { label: heading }]} />
       </div>
 
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-border pb-5 sm:mb-6 sm:pb-6 lg:mb-8 lg:pb-7">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-border pb-4 sm:mb-5 sm:pb-5 lg:mb-6 lg:pb-5">
         <div>
           <h1 className="text-h3 font-display font-bold tracking-tight text-heading sm:text-h2">{heading}</h1>
           {!isLoading && data && (
@@ -408,74 +408,74 @@ export default function ProductListingPage({ title, sortBy: fixedSortBy, onSale 
           </div>
         </div>
       ) : (
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_1fr] lg:gap-10 xl:gap-12">
-        <aside className="hidden min-w-0 lg:block">{sidebarContent}</aside>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[240px_1fr] lg:gap-8 xl:gap-10">
+          <aside className="hidden min-w-0 lg:block">{sidebarContent}</aside>
 
-        <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-          <SheetContent side="left" className="w-[85%] gap-0 overflow-y-auto sm:max-w-sm">
-            <SheetHeader className="border-b border-border">
-              <SheetTitle>Filters</SheetTitle>
-            </SheetHeader>
-            <div className="p-4">{sidebarContent}</div>
-          </SheetContent>
-        </Sheet>
+          <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <SheetContent side="left" className="w-[85%] gap-0 overflow-y-auto sm:max-w-sm">
+              <SheetHeader className="border-b border-border">
+                <SheetTitle>Filters</SheetTitle>
+              </SheetHeader>
+              <div className="p-4">{sidebarContent}</div>
+            </SheetContent>
+          </Sheet>
 
-        <div className="min-w-0">
-          {isError ? (
-            <ErrorState description={error?.message} actionLabel="Retry" onAction={refetch} />
-          ) : isLoading ? (
-            // Always the grid skeleton, even in list view - a brief loading
-            // state doesn't need to match the final layout pixel-for-pixel,
-            // and ProductCardSkeleton's square shape only stays proportioned
-            // inside a grid column (see ProductListItem for why list view
-            // needs its own, differently-shaped row instead).
-            <ResponsiveGrid count={PAGE_SIZE} className="gap-x-3 gap-y-6 sm:gap-x-4 sm:gap-y-8 xl:gap-x-6">
-              {Array.from({ length: PAGE_SIZE }).map((_, i) => (
-                <ProductCardSkeleton key={i} />
-              ))}
-            </ResponsiveGrid>
-          ) : isEmpty ? (
-            <EmptyState
-              title="No products found"
-              description="Try adjusting your filters or browse another category."
-              actionLabel={hasOtherFilters ? 'Clear Filters' : undefined}
-              onAction={hasOtherFilters ? handleClearFilters : undefined}
-            />
-          ) : viewMode === 'list' ? (
-            <>
-              <div className="flex flex-col gap-3 sm:gap-4">
-                {data.items.map((product) => (
-                  <ProductListItem key={product.id} product={product} />
-                ))}
-              </div>
-              <div className="mt-8 border-t border-border pt-6 sm:mt-10 sm:pt-8">
-                <Pagination
-                  page={data.meta.page}
-                  totalPages={data.meta.totalPages}
-                  totalItems={data.meta.totalItems}
-                  onPageChange={handlePageChange}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <ResponsiveGrid count={data.items.length} className="gap-x-3 gap-y-6 sm:gap-x-4 sm:gap-y-8 xl:gap-x-6">
-                {data.items.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+          <div className="min-w-0">
+            {isError ? (
+              <ErrorState description={error?.message} actionLabel="Retry" onAction={refetch} />
+            ) : isLoading ? (
+              // Always the grid skeleton, even in list view - a brief loading
+              // state doesn't need to match the final layout pixel-for-pixel,
+              // and ProductCardSkeleton's square shape only stays proportioned
+              // inside a grid column (see ProductListItem for why list view
+              // needs its own, differently-shaped row instead).
+              <ResponsiveGrid count={PAGE_SIZE} className="gap-x-3 gap-y-6 sm:gap-x-4 sm:gap-y-8 xl:gap-x-6">
+                {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                  <ProductCardSkeleton key={i} />
                 ))}
               </ResponsiveGrid>
-              <div className="mt-8 border-t border-border pt-6 sm:mt-10 sm:pt-8">
-                <Pagination
-                  page={data.meta.page}
-                  totalPages={data.meta.totalPages}
-                  totalItems={data.meta.totalItems}
-                  onPageChange={handlePageChange}
-                />
-              </div>
-            </>
-          )}
+            ) : isEmpty ? (
+              <EmptyState
+                title="No products found"
+                description="Try adjusting your filters or browse another category."
+                actionLabel={hasOtherFilters ? 'Clear Filters' : undefined}
+                onAction={hasOtherFilters ? handleClearFilters : undefined}
+              />
+            ) : viewMode === 'list' ? (
+              <>
+                <div className="flex flex-col gap-3 sm:gap-4">
+                  {data.items.map((product) => (
+                    <ProductListItem key={product.id} product={product} />
+                  ))}
+                </div>
+                <div className="mt-8 border-t border-border pt-6 sm:mt-10 sm:pt-8">
+                  <Pagination
+                    page={data.meta.page}
+                    totalPages={data.meta.totalPages}
+                    totalItems={data.meta.totalItems}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <ResponsiveGrid count={data.items.length} className="gap-x-3 gap-y-6 sm:gap-x-4 sm:gap-y-8 xl:gap-x-6">
+                  {data.items.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </ResponsiveGrid>
+                <div className="mt-8 border-t border-border pt-6 sm:mt-10 sm:pt-8">
+                  <Pagination
+                    page={data.meta.page}
+                    totalPages={data.meta.totalPages}
+                    totalItems={data.meta.totalItems}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
       )}
     </PageContainer>
   );

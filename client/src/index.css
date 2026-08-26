@@ -5,6 +5,15 @@
 @import "@fontsource/playfair-display/400.css";
 @import "@fontsource/playfair-display/700.css";
 @import "@fontsource/fraunces/300.css";
+/* Settings -> Typography's curated allowlist (constants/typography.js) -
+   limited weight subsets (not the full family) to keep the added bundle
+   cost small: 400/600 covers regular body copy + semibold emphasis for
+   both, the only two weights this codebase's type scale actually uses. */
+@import "@fontsource/cormorant-garamond/400.css";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
 
 /* =========================================================
    GLOBAL DESIGN SYSTEM - single source of truth
@@ -262,4 +271,10 @@
    (premium CTAs, badges, the account-page hero panel). */
 @utility bg-gradient-luxury {
   background-image: linear-gradient(135deg, var(--gold) 0%, color-mix(in oklch, var(--gold), white 30%) 100%);
+}
+
+@utility bg-glass {
+  background-color: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }

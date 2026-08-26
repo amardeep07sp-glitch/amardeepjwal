@@ -6,6 +6,10 @@ export const navbarService = {
     return navbarRepository.findAll();
   },
 
+  listPublicItems() {
+    return navbarRepository.findActive();
+  },
+
   createItem(data) {
     return navbarRepository.create(data);
   },

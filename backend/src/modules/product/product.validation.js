@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CATALOG_STATUSES, GENDERS, OCCASIONS } from '../../constants/catalog.js';
+import { CATALOG_STATUSES, GENDERS, OCCASIONS, JEWELLERY_METALS, JEWELLERY_PURITIES_BY_METAL, GEMSTONE_TYPES } from '../../constants/catalog.js';
 
 const seoBody = z.object({
   metaTitle: z.string().optional(),
@@ -30,14 +30,35 @@ const productBody = z.object({
   searchKeywords: z.array(z.string()).optional(),
   gender: z.enum(Object.values(GENDERS)).optional().nullable(),
   occasion: z.array(z.enum(Object.values(OCCASIONS))).optional(),
+  metal: z.enum(Object.values(JEWELLERY_METALS)).optional().nullable(),
+  purity: z.string().trim().optional(),
+  gemstoneType: z.enum(Object.values(GEMSTONE_TYPES)).optional(),
   seo: seoBody.optional(),
 });
 
-export const createProductSchema = z.object({ body: productBody });
+// Purity is a real-world value tied to metal (24K only makes sense for
+// gold, 925 only for silver) - checked here rather than in the Mongoose
+// schema, which has no clean way to make one field's enum conditional on
+// a sibling. Only enforced when BOTH fields are actually present in this
+// particular payload, so a partial update touching just one of them isn't
+// forced to resend the other.
+const refinePurityMatchesMetal = (data, ctx) => {
+  if (!data.metal || !data.purity) return;
+  const allowed = JEWELLERY_PURITIES_BY_METAL[data.metal] ?? [];
+  if (!allowed.includes(data.purity)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['purity'],
+      message: `"${data.purity}" is not a valid purity for ${data.metal} - expected one of: ${allowed.join(', ') || 'none'}`,
+    });
+  }
+};
+
+export const createProductSchema = z.object({ body: productBody.superRefine(refinePurityMatchesMetal) });
 
 export const updateProductSchema = z.object({
   params: z.object({ id: z.string() }),
-  body: productBody.partial(),
+  body: productBody.partial().superRefine(refinePurityMatchesMetal),
 });
 
 export const productIdSchema = z.object({ params: z.object({ id: z.string() }) });

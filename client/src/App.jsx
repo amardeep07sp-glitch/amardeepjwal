@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import { ScrollToTop } from '@/routes/ScrollToTop';
 import { PageViewTracker } from '@/routes/PageViewTracker';
+import { ApplyTypography } from '@/components/global/ApplyTypography';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import HomePage from '@/pages/HomePage';
@@ -11,7 +12,10 @@ import CollectionsPage from '@/pages/CollectionsPage';
 import CollectionDetailPage from '@/pages/CollectionDetailPage';
 import BrandsPage from '@/pages/BrandsPage';
 import BrandDetailPage from '@/pages/BrandDetailPage';
+import MudrikaPage from '@/pages/MudrikaPage';
 import AuthPage from '@/pages/AuthPage';
+import ForgotPasswordPage from '@/pages/ForgotPasswordPage';
+import ResetPasswordPage from '@/pages/ResetPasswordPage';
 import CartPage from '@/pages/CartPage';
 import CheckoutPage from '@/pages/CheckoutPage';
 import OrderConfirmationPage from '@/pages/OrderConfirmationPage';
@@ -19,13 +23,25 @@ import MyOrdersPage from '@/pages/MyOrdersPage';
 import OrderDetailPage from '@/pages/OrderDetailPage';
 import WishlistPage from '@/pages/WishlistPage';
 import ProfilePage from '@/pages/ProfilePage';
+import RewardsPage from '@/pages/RewardsPage';
+import TrackOrderPage from '@/pages/TrackOrderPage';
+import GoldRatePage from '@/pages/GoldRatePage';
+import ContactPage from '@/pages/ContactPage';
+import FaqsPage from '@/pages/FaqsPage';
 import AddressesPage from '@/pages/AddressesPage';
+import HelpCenterPage from '@/pages/HelpCenterPage';
+import HelpArticlePage from '@/pages/HelpArticlePage';
+import HelpCategoryPage from '@/pages/HelpCategoryPage';
+import SupportCenterPage from '@/pages/SupportCenterPage';
+import SupportTicketDetailPage from '@/pages/SupportTicketDetailPage';
+import CmsPage from '@/pages/CmsPage';
 
 export default function App() {
   return (
     <>
       <ScrollToTop />
       <PageViewTracker />
+      <ApplyTypography />
       <Routes>
         <Route element={<MainLayout />}>
           <Route index element={<HomePage />} />
@@ -44,6 +60,8 @@ export default function App() {
           <Route path="collections/:slug" element={<CollectionDetailPage />} />
           <Route path="brands" element={<BrandsPage />} />
           <Route path="brand/:slug" element={<BrandDetailPage />} />
+          <Route path="mudrika" element={<MudrikaPage />} />
+          <Route path="brand/mudrika" element={<MudrikaPage />} />
           {/* No fixed sortBy (unlike New Arrivals/Offers) - relevance is
               only the right default sort for a search result page, not the
               only one; the visitor can still switch to price high/low
@@ -56,12 +74,25 @@ export default function App() {
           <Route path="orders/:orderId" element={<OrderDetailPage />} />
           <Route path="wishlist" element={<WishlistPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="rewards" element={<RewardsPage />} />
+          <Route path="track-order" element={<TrackOrderPage />} />
+          <Route path="gold-rate" element={<GoldRatePage />} />
+          <Route path="contact" element={<ContactPage />} />
+          <Route path="faqs" element={<FaqsPage />} />
+          <Route path="pages/:slug" element={<CmsPage />} />
           <Route path="addresses" element={<AddressesPage />} />
+          <Route path="help" element={<HelpCenterPage />} />
+          <Route path="help/category/:category" element={<HelpCategoryPage />} />
+          <Route path="help/:slug" element={<HelpArticlePage />} />
+          <Route path="support" element={<SupportCenterPage />} />
+          <Route path="support/tickets/:id" element={<SupportTicketDetailPage />} />
           <Route path="*" element={<HomePage />} />
         </Route>
 
         <Route element={<AuthLayout />}>
           <Route path="login" element={<AuthPage />} />
+          <Route path="forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="reset-password" element={<ResetPasswordPage />} />
         </Route>
       </Routes>
     </>

@@ -4,16 +4,28 @@ const mockEventRepo = { create: jest.fn() };
 const mockSessionService = { getOrCreateSession: jest.fn(), recordLogin: jest.fn(), recordLogout: jest.fn(), closeSession: jest.fn() };
 const mockVisitorService = { touch: jest.fn(), linkCustomer: jest.fn(), markGuestCheckout: jest.fn() };
 const mockConsentService = { hasAnalyticsConsent: jest.fn() };
+const mockResolveLocationFromIp = jest.fn();
+const mockResolveTrafficSource = jest.fn(() => 'direct');
 
 jest.unstable_mockModule('../src/modules/cip/event.repository.js', () => ({ eventRepository: mockEventRepo }));
 jest.unstable_mockModule('../src/modules/cip/session.service.js', () => ({ sessionService: mockSessionService }));
 jest.unstable_mockModule('../src/modules/cip/visitor.service.js', () => ({ visitorService: mockVisitorService }));
 jest.unstable_mockModule('../src/modules/cip/consent.service.js', () => ({ consentService: mockConsentService }));
+// Mocked because resolveLocationFromIp now does real I/O (Redis cache +
+// an external geo-IP HTTP call) - a unit test must never hit either. No
+// test here asserts on the exact traffic.source classification, so
+// resolveTrafficSource is stubbed too rather than kept real.
+jest.unstable_mockModule('../src/modules/cip/geo.util.js', () => ({
+  resolveLocationFromIp: mockResolveLocationFromIp,
+  resolveTrafficSource: mockResolveTrafficSource,
+}));
 
 const { eventService } = await import('../src/modules/cip/event.service.js');
 
 beforeEach(() => {
   [mockEventRepo, mockSessionService, mockVisitorService, mockConsentService].forEach((mockObj) => Object.values(mockObj).forEach((fn) => fn.mockReset()));
+  mockResolveLocationFromIp.mockReset().mockImplementation(() => ({ country: '', state: '', city: '', approxLat: null, approxLng: null, timezone: '' }));
+  mockResolveTrafficSource.mockReset().mockReturnValue('direct');
   mockConsentService.hasAnalyticsConsent.mockResolvedValue(true);
   mockEventRepo.create.mockImplementation((data) => Promise.resolve({ _id: 'evt1', ...data }));
 });

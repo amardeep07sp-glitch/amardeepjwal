@@ -1,6 +1,8 @@
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { productService } from './product.service.js';
+import { reviewService } from '../review/review.service.js';
+import { serializePublicReviewList } from '../review/review.serializer.js';
 
 export const listProducts = asyncHandler(async (req, res) => {
   const { items, meta } = await productService.listProducts(req.query);
@@ -93,4 +95,9 @@ export const getPublicProductBySlug = asyncHandler(async (req, res) => {
 export const getPublicSimilarProducts = asyncHandler(async (req, res) => {
   const products = await productService.getPublicSimilarProducts(req.params.slug, req.query.limit);
   res.status(200).json(new ApiResponse(200, products, 'Similar products fetched successfully'));
+});
+
+export const getPublicProductReviews = asyncHandler(async (req, res) => {
+  const { items, meta, summary } = await reviewService.listPublicForProduct(req.params.slug, req.query);
+  res.status(200).json(new ApiResponse(200, { items: serializePublicReviewList(items), meta, summary }, 'Reviews fetched successfully'));
 });

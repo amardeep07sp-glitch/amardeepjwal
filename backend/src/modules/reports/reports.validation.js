@@ -20,6 +20,14 @@ export const reportSummaryQuerySchema = z.object({
   query: z.object({ dateFrom: z.string().optional(), dateTo: z.string().optional() }),
 });
 
+export const salesByDateQuerySchema = z.object({
+  query: z.object({
+    dateFrom: z.string().optional(),
+    dateTo: z.string().optional(),
+    groupBy: z.enum(['day', 'week', 'month']).default('day'),
+  }),
+});
+
 export const reportExportQuerySchema = z.object({
   query: z.object({
     dateFrom: z.string().optional(),

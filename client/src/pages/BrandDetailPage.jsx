@@ -83,7 +83,7 @@ export default function BrandDetailPage() {
   return (
     <div className="flex min-w-0 flex-col gap-10 pb-16 sm:gap-14">
       <PageContainer top="md" bottom="none">
-        <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="sticky top-[60px] lg:top-[113px] z-40 -mx-4 mb-4 flex flex-wrap items-center gap-4 bg-background/95 px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
           <BackButton />
           <Breadcrumb items={[{ label: 'Home', to: '/' }, { label: 'Brands', to: '/brands' }, { label: brand.name }]} />
         </div>

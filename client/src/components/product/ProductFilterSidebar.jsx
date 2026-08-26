@@ -73,7 +73,7 @@ export function ProductFilterSidebar({ filters, onApply, onClear, hideCategoryFa
 
       {!hideCategoryFacet && (
         <div className="flex flex-col gap-3 border-t border-border pt-4">
-          <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Category</p>
+          <p className="font-nav text-sm font-medium text-heading">Category</p>
           {isLoading ? (
             <div className="flex flex-col gap-2.5">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -98,7 +98,7 @@ export function ProductFilterSidebar({ filters, onApply, onClear, hideCategoryFa
 
       {!hideBrandFacet && facets?.brands?.length > 0 && (
         <div className="flex flex-col gap-3 border-t border-border pt-4">
-          <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Brand</p>
+          <p className="font-nav text-sm font-medium text-heading">Brand</p>
           <div className="flex flex-col gap-2.5">
             {facets.brands.map((b) => (
               <Label key={b.id} className="flex cursor-pointer items-center gap-2 text-sm font-normal text-foreground">
@@ -113,7 +113,7 @@ export function ProductFilterSidebar({ filters, onApply, onClear, hideCategoryFa
 
       {facets?.priceRange && facets.priceRange.max > 0 && (
         <div className="flex flex-col gap-3 border-t border-border pt-4">
-          <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Price Range</p>
+          <p className="font-nav text-sm font-medium text-heading">Price Range</p>
           <div className="flex items-center gap-2">
             <Input
               type="number"
@@ -121,7 +121,7 @@ export function ProductFilterSidebar({ filters, onApply, onClear, hideCategoryFa
               placeholder="Min"
               value={minPrice}
               onChange={(e) => setMinPrice(e.target.value)}
-              className="h-9 text-sm"
+              className="h-9 text-sm bg-secondary/30 border-border/50 focus:bg-background"
             />
             <span className="text-muted-foreground">-</span>
             <Input
@@ -130,7 +130,7 @@ export function ProductFilterSidebar({ filters, onApply, onClear, hideCategoryFa
               placeholder="Max"
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
-              className="h-9 text-sm"
+              className="h-9 text-sm bg-secondary/30 border-border/50 focus:bg-background"
             />
           </div>
           <p className="text-xs text-muted-foreground">
@@ -141,7 +141,7 @@ export function ProductFilterSidebar({ filters, onApply, onClear, hideCategoryFa
 
       {facets?.genders?.length > 0 && (
         <div className="flex flex-col gap-3 border-t border-border pt-4">
-          <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Gender</p>
+          <p className="font-nav text-sm font-medium text-heading">Gender</p>
           <div className="flex flex-col gap-2.5">
             {facets.genders.map((g) => (
               <Label key={g.value} className="flex cursor-pointer items-center gap-2 text-sm font-normal text-foreground">
@@ -159,7 +159,7 @@ export function ProductFilterSidebar({ filters, onApply, onClear, hideCategoryFa
 
       {facets?.occasions?.length > 0 && (
         <div className="flex flex-col gap-3 border-t border-border pt-4">
-          <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Occasion</p>
+          <p className="font-nav text-sm font-medium text-heading">Occasion</p>
           <div className="flex flex-col gap-2.5">
             {facets.occasions.map((o) => (
               <Label key={o.value} className="flex cursor-pointer items-center gap-2 text-sm font-normal text-foreground">
@@ -174,7 +174,7 @@ export function ProductFilterSidebar({ filters, onApply, onClear, hideCategoryFa
 
       {facets?.tags?.length > 0 && (
         <div className="flex flex-col gap-3 border-t border-border pt-4">
-          <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Tags</p>
+          <p className="font-nav text-sm font-medium text-heading">Tags</p>
           <div className="flex flex-col gap-2.5">
             {facets.tags.map((t) => (
               <Label key={t.tag} className="flex cursor-pointer items-center gap-2 text-sm font-normal text-foreground capitalize">
@@ -187,7 +187,7 @@ export function ProductFilterSidebar({ filters, onApply, onClear, hideCategoryFa
         </div>
       )}
 
-      <Button onClick={handleApply} className="w-full">
+      <Button onClick={handleApply} className="w-full bg-gradient-luxury text-primary-foreground shadow-luxury border-0 hover:shadow-hover hover:scale-[1.02] transition-all duration-300">
         Apply Filters
       </Button>
     </div>

@@ -1,7 +1,7 @@
 import { Brand } from './brand.model.js';
 import { CATALOG_STATUSES } from '../../constants/catalog.js';
 
-const MEDIA_POPULATE_FIELDS = ['logoMedia', 'bannerMedia', 'seo.ogImageMedia'];
+const MEDIA_POPULATE_FIELDS = ['logoMedia', 'bannerMedia', 'seo.ogImageMedia', 'showcase.heroImageMedia', 'showcase.storyImageMedia'];
 
 // Same shape as category.repository.js's PUBLIC_FILTER - published AND
 // visible, the only two gates a storefront read ever needs.

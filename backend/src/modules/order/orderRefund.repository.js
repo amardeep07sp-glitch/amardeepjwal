@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { OrderRefund } from './orderRefund.model.js';
+import { REFUND_STATUSES } from './order.constants.js';
 
 const POPULATE_FIELDS = [{ path: 'order', select: 'orderNumber customer' }];
 
@@ -32,6 +33,16 @@ export const orderRefundRepository = {
 
   updateById(id, data, session) {
     return OrderRefund.findByIdAndUpdate(id, data, { new: true, session: session ?? undefined });
+  },
+
+  // Phase 59 automation sweep candidates - still PENDING/PROCESSING past
+  // the given cutoff (the sweep decides how "stale" means, see
+  // supportAutomation.service.js).
+  findStalePending(cutoffDate) {
+    return OrderRefund.find({
+      status: { $in: [REFUND_STATUSES.PENDING, REFUND_STATUSES.PROCESSING] },
+      createdAt: { $lt: cutoffDate },
+    }).populate(POPULATE_FIELDS);
   },
 
   // Same explicit-cast requirement as orderPayment.repository.js#sumPaidByOrder

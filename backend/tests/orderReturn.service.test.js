@@ -7,6 +7,7 @@ const mockOrderAudit = { record: jest.fn() };
 const mockInventoryRepo = { findOneByScope: jest.fn() };
 const mockInventoryService = { recordReturn: jest.fn() };
 const mockInventoryLedgerService = { evaluateAlertsAfterCommit: jest.fn() };
+const mockCouponService = { releaseRedemptionForOrder: jest.fn() };
 const mockSession = {
   startTransaction: jest.fn(),
   commitTransaction: jest.fn(),
@@ -21,6 +22,10 @@ jest.unstable_mockModule('../src/modules/order/order.audit.js', () => ({ orderAu
 jest.unstable_mockModule('../src/modules/inventory/inventory.repository.js', () => ({ inventoryRepository: mockInventoryRepo }));
 jest.unstable_mockModule('../src/modules/inventory/inventory.service.js', () => ({ inventoryService: mockInventoryService }));
 jest.unstable_mockModule('../src/modules/inventory/inventoryLedger.service.js', () => ({ inventoryLedgerService: mockInventoryLedgerService }));
+// Mocked because coupon.service.js transitively loads coupon.model.js,
+// which calls `new mongoose.Schema(...)` at module-load time - with
+// mongoose mocked below, that crashes the instant anything imports it.
+jest.unstable_mockModule('../src/modules/coupon/coupon.service.js', () => ({ couponService: mockCouponService }));
 jest.unstable_mockModule('mongoose', () => ({
   default: { startSession: jest.fn(() => Promise.resolve(mockSession)) },
 }));
@@ -28,9 +33,17 @@ jest.unstable_mockModule('mongoose', () => ({
 const { orderReturnService } = await import('../src/modules/order/orderReturn.service.js');
 
 beforeEach(() => {
-  [mockOrderRepo, mockOrderItemRepo, mockOrderReturnRepo, mockOrderAudit, mockInventoryRepo, mockInventoryService, mockInventoryLedgerService, mockSession].forEach(
-    (mockObj) => Object.values(mockObj).forEach((fn) => fn.mockReset?.())
-  );
+  [
+    mockOrderRepo,
+    mockOrderItemRepo,
+    mockOrderReturnRepo,
+    mockOrderAudit,
+    mockInventoryRepo,
+    mockInventoryService,
+    mockInventoryLedgerService,
+    mockCouponService,
+    mockSession,
+  ].forEach((mockObj) => Object.values(mockObj).forEach((fn) => fn.mockReset?.()));
 });
 
 describe('orderReturnService transition guards', () => {

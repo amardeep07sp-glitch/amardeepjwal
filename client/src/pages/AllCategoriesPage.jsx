@@ -29,8 +29,8 @@ export default function AllCategoriesPage() {
 
   return (
     <PageContainer top="md" bottom="md">
-      <div className="mb-6 flex items-center gap-2">
-        <BackButton />
+      <div className="sticky top-[60px] lg:top-[113px] z-40 -mx-4 mb-4 flex flex-wrap items-center gap-4 bg-background/95 px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+          <BackButton />
         <h1 className="text-h3 font-display font-bold text-heading sm:text-h2">All Categories</h1>
       </div>
 

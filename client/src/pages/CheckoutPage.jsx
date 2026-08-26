@@ -6,7 +6,6 @@ import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { useMyAddresses, useCheckout, useVerifyRazorpayPayment } from '@/features/storefront/storefrontApi';
 import { useProductBySlug } from '@/features/products/productsApi';
-import { loadRazorpayScript } from '@/lib/razorpay';
 import { CheckoutStepper } from '@/components/checkout/CheckoutStepper';
 import { AddressForm } from '@/components/checkout/AddressForm';
 import { PageContainer } from '@/components/global/PageContainer';
@@ -15,8 +14,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatPrice } from '@/lib/format';
-import { APP_NAME } from '@/config/appConfig';
 import { cn } from '@/lib/utils';
+import { ReportProblemButton } from '@/components/support/ReportProblemButton';
+import { GetSupportButton } from '@/components/support/GetSupportButton';
 
 const STEP_ORDER = ['address', 'review', 'payment'];
 
@@ -135,11 +135,28 @@ export default function CheckoutPage() {
       const result = await checkoutMutation.mutateAsync(payload);
 
       if (paymentMethod === 'cod') {
+        // Real order, real fraud/risk guard (env.COD_MAX_ORDER_VALUE,
+        // unset by default) - same "order exists, just needs payment
+        // resolved another way" shape as the Razorpay initiation-failure
+        // branch below, never a dead end.
+        if (result.payment.status === 'cod_limit_exceeded') {
+          clearCart();
+          setPlacedOrderNumber(result.order.orderNumber);
+          setCheckoutError(`Your order ${result.order.orderNumber} was placed. ${result.payment.error}`);
+          return;
+        }
         clearCart();
         navigate(`/order-confirmation/${result.order.id}`);
         return;
       }
 
+      // Online payment (Razorpay) - DISABLED, see the payment-method radio
+      // group above. paymentMethod can never actually be 'razorpay' right
+      // now (UI only offers 'cod'), so this branch is dead in practice;
+      // commented out anyway so there's zero chance of it firing against
+      // an unconfigured gateway. Uncomment together with the radio option
+      // once RAZORPAY_KEY_ID/SECRET/WEBHOOK_SECRET are set (apikey.todo).
+      /*
       // Razorpay - storefront.service.js still returns the real, already-
       // placed order even when gateway initiation itself failed
       // (payment.status === 'initiation_failed'), so that case is never a
@@ -188,6 +205,7 @@ export default function CheckoutPage() {
         theme: { color: '#C8A24D' },
       });
       razorpay.open();
+      */
     } catch (err) {
       setCheckoutError(err.message || 'Something went wrong placing your order.');
     }
@@ -342,7 +360,14 @@ export default function CheckoutPage() {
                         <span className="block text-xs text-muted-foreground">Pay when your order arrives</span>
                       </span>
                     </Label>
-                    <Label
+                    {/* Online payment (Razorpay) - DISABLED until real
+                        RAZORPAY_KEY_ID/SECRET/WEBHOOK_SECRET are set in
+                        production (see apikey.todo). The handling code
+                        below in handlePlaceOrder is commented out too -
+                        uncomment both together to re-enable. COD-only is a
+                        safe launch default; nothing about checkout itself
+                        is broken by this, it just has one payment method. */}
+                    {/* <Label
                       htmlFor="pay-razorpay"
                       className={cn(
                         'flex cursor-pointer items-center gap-3 rounded-xl p-4 ring-1 transition-colors',
@@ -355,11 +380,24 @@ export default function CheckoutPage() {
                         <span className="block font-semibold text-heading">Pay Online</span>
                         <span className="block text-xs text-muted-foreground">UPI, Cards, Netbanking via Razorpay</span>
                       </span>
-                    </Label>
+                    </Label> */}
                   </RadioGroup>
 
                   {checkoutError && (
-                    <p className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{checkoutError}</p>
+                    <div className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                      <p>{checkoutError}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <ReportProblemButton
+                          category="payment"
+                          entityType="checkout"
+                          context={{ errorMessage: checkoutError, paymentMethod, cartTotal: subtotal }}
+                          triggerLabel="Report this issue"
+                          variant="outline"
+                          className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                        />
+                        <GetSupportButton category="payment" context={{ extra: { errorMessage: checkoutError } }} triggerLabel="Get Help" variant="outline" />
+                      </div>
+                    </div>
                   )}
 
                   <Button

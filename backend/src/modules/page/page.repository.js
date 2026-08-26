@@ -1,10 +1,15 @@
 import { Page } from './page.model.js';
+import { PAGE_STATUSES } from '../../constants/cms.js';
 
 const POPULATE_FIELDS = ['heroMedia', 'ogImageMedia'];
 
 export const pageRepository = {
   findAll() {
     return Page.find().sort({ createdAt: -1 }).populate(POPULATE_FIELDS);
+  },
+
+  findPublishedBySlug(slug) {
+    return Page.findOne({ slug, status: PAGE_STATUSES.PUBLISHED }).populate(POPULATE_FIELDS);
   },
 
   findById(id) {

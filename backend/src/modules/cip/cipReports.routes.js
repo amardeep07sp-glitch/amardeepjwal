@@ -12,8 +12,12 @@ import {
 } from './cipReports.validation.js';
 import {
   getVisitorReport,
+  getEngagementSummary,
   getDeviceReport,
   getLocationReport,
+  getLoginLocationPoints,
+  getLoginLocationStates,
+  getOrderLocationStates,
   getSourceBreakdown,
   getUtmCampaignReport,
   getTopLandingPages,
@@ -39,8 +43,12 @@ const router = Router();
 const canView = authorize(...VIEW_ROLES);
 
 router.get('/visitors', protect, canView, validate(dateRangeQuerySchema), getVisitorReport);
+router.get('/engagement', protect, canView, validate(dateRangeQuerySchema), getEngagementSummary);
 router.get('/devices', protect, canView, validate(dateRangeQuerySchema), getDeviceReport);
 router.get('/locations', protect, canView, validate(dateRangeQuerySchema), getLocationReport);
+router.get('/locations/logins', protect, canView, getLoginLocationPoints);
+router.get('/locations/logins/states', protect, canView, getLoginLocationStates);
+router.get('/locations/orders/states', protect, canView, validate(dateRangeQuerySchema), getOrderLocationStates);
 
 router.get('/traffic/sources', protect, canView, validate(dateRangeQuerySchema), getSourceBreakdown);
 router.get('/traffic/utm-campaigns', protect, canView, validate(dateRangeQuerySchema), getUtmCampaignReport);

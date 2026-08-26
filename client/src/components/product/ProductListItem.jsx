@@ -21,7 +21,7 @@ export function ProductListItem({ product }) {
     <div className="flex gap-4 rounded-lg bg-card p-3 ring-1 ring-border sm:gap-5 sm:p-4">
       <Link to={`/products/${slug}`} aria-label={name} className="relative size-28 shrink-0 overflow-hidden rounded-lg bg-secondary sm:size-36">
         {image ? (
-          <img src={image.secureUrl} alt={image.altText || name} loading="lazy" className="size-full object-cover" />
+          <img src={image.secureUrl} alt={image.altText || name} loading="lazy" className="size-full object-contain" />
         ) : (
           <div className="flex size-full items-center justify-center bg-linear-to-br from-primary/10 via-secondary to-secondary">
             <Gem className="size-8 text-primary/40" strokeWidth={1.25} />

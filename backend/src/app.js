@@ -14,11 +14,24 @@ import swaggerSpec from './config/swagger.js';
 import { apiLimiter, eventLimiter } from './middlewares/rateLimiter.middleware.js';
 import { notFound, errorHandler } from './middlewares/error.middleware.js';
 import routes from './routes/index.js';
+import seoRoutes from './modules/seo/seo.routes.js';
 import cipEventPublicRoutes from './modules/cip/event.public.routes.js';
 import cipSessionPublicRoutes from './modules/cip/session.public.routes.js';
 import cipPrivacyPublicRoutes from './modules/cip/privacy.public.routes.js';
 
 const app = express();
+
+// Without this, req.ip is always the reverse proxy's own address (a
+// private/internal IP) in any real deployment sitting behind one (Nginx,
+// a load balancer, most PaaS hosts) - geo.util.js#resolveLocationFromIp
+// would then either resolve the proxy's own location for every visitor,
+// or (if the proxy's IP is a private range) silently return no location
+// at all, which is exactly the "wrong location detected" symptom this
+// fixes. `1` trusts exactly one hop (the immediate proxy) and reads the
+// real client IP from its X-Forwarded-For header - the standard, safe
+// setting for a single reverse-proxy deployment (raise it only if a
+// second proxy layer is added in front of that one).
+app.set('trust proxy', 1);
 
 app.use(helmet());
 app.use(
@@ -50,6 +63,11 @@ app.use(
     stream: { write: (message) => logger.info(message.trim()) },
   })
 );
+
+// Root-level, unauthenticated - /sitemap.xml and /robots.txt must resolve
+// at the site's own domain root per their respective specs, not under the
+// /api/v1 prefix everything else uses (see seo.routes.js's header comment).
+app.use(seoRoutes);
 
 // Public, unauthenticated Customer Intelligence Platform endpoints - the
 // tracking SDK calls these before a visitor has ever logged in. Mounted

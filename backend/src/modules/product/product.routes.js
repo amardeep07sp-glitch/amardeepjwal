@@ -17,6 +17,7 @@ import {
   publicProductSimilarQuerySchema,
   publicSearchSuggestQuerySchema,
 } from './product.validation.js';
+import { publicProductReviewsQuerySchema } from '../review/review.validation.js';
 import {
   listProducts,
   getProductById,
@@ -36,6 +37,7 @@ import {
   getPublicTrendingProducts,
   getPublicProductBySlug,
   getPublicSimilarProducts,
+  getPublicProductReviews,
 } from './product.controller.js';
 import { updatePricingSchema, pricingHistoryQuerySchema } from './pricing/pricing.validation.js';
 import { getPricing, updatePricing, getPriceHistory } from './pricing/pricing.controller.js';
@@ -72,6 +74,7 @@ router.get('/public/new-arrivals', validate(publicProductListQuerySchema), getPu
 router.get('/public/featured', validate(publicProductListQuerySchema), getPublicFeaturedProducts);
 router.get('/public/trending', validate(publicProductListQuerySchema), getPublicTrendingProducts);
 router.get('/public/:slug/similar', validate(publicProductSimilarQuerySchema), getPublicSimilarProducts);
+router.get('/public/:slug/reviews', validate(publicProductReviewsQuerySchema), getPublicProductReviews);
 router.get('/public/:slug', validate(publicProductSlugSchema), getPublicProductBySlug);
 
 router.get('/', protect, validate(listProductsQuerySchema), listProducts);

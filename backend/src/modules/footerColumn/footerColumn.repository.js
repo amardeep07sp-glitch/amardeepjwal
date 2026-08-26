@@ -5,6 +5,10 @@ export const footerColumnRepository = {
     return FooterColumn.find().sort({ order: 1 });
   },
 
+  findActive() {
+    return FooterColumn.find({ isActive: true }).sort({ order: 1 });
+  },
+
   findById(id) {
     return FooterColumn.findById(id);
   },

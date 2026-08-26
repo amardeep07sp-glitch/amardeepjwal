@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CATALOG_STATUSES } from '../../constants/catalog.js';
+import { CATALOG_STATUSES, BRAND_SHOWCASE_ICONS } from '../../constants/catalog.js';
 
 const seoBody = z.object({
   metaTitle: z.string().optional(),
@@ -7,6 +7,41 @@ const seoBody = z.object({
   metaKeywords: z.string().optional(),
   canonicalUrl: z.string().optional(),
   ogImageMedia: z.string().optional().nullable(),
+});
+
+const iconBody = z.enum([...BRAND_SHOWCASE_ICONS, '']).optional();
+
+const editionBody = z.object({
+  name: z.string().min(1, 'Name is required'),
+  localName: z.string().optional(),
+  tagline: z.string().optional(),
+  categorySlug: z.string().optional(),
+});
+
+const craftPillarBody = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  icon: iconBody,
+});
+
+const trustBenefitBody = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  icon: iconBody,
+});
+
+// Capped at 8 each - these render as fixed grids (2/4 columns), not an
+// open-ended list; a flagship brand page doesn't need more than that.
+const showcaseBody = z.object({
+  heroTagline: z.string().optional(),
+  heroLocalName: z.string().optional(),
+  heroImageMedia: z.string().optional().nullable(),
+  storyTitle: z.string().optional(),
+  storyBody: z.string().optional(),
+  storyImageMedia: z.string().optional().nullable(),
+  editions: z.array(editionBody).max(8).optional(),
+  craftPillars: z.array(craftPillarBody).max(8).optional(),
+  trustBenefits: z.array(trustBenefitBody).max(8).optional(),
 });
 
 const brandBody = z.object({
@@ -23,6 +58,7 @@ const brandBody = z.object({
   isVisible: z.boolean().optional(),
   order: z.number().optional(),
   seo: seoBody.optional(),
+  showcase: showcaseBody.optional(),
 });
 
 export const createBrandSchema = z.object({ body: brandBody });

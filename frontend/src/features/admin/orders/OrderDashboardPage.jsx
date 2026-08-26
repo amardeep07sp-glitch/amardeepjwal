@@ -14,7 +14,7 @@ import { ShoppingCart, Clock, Package, Truck, CheckCircle2, XCircle, IndianRupee
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageLoader } from '@/components/global/Loading';
 import { ErrorState } from '@/components/global/ErrorState';
-import { useDashboardTotals, useSalesTrend, useStatusDistribution, usePaymentBreakdown } from './ordersApi';
+import { useDashboardTotals, useSalesTrend, usePaymentBreakdown } from './ordersApi';
 import { ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from './orderSchema';
 
 // Same single-hue convention established in InventoryDashboardPage.jsx -
@@ -78,7 +78,6 @@ function CategoryTooltip({ active, payload, label, valueFormatter = formatCompac
 export default function OrderDashboardPage() {
   const { data: totals, isLoading, error, refetch } = useDashboardTotals();
   const { data: trend } = useSalesTrend(14);
-  const { data: statusDistribution } = useStatusDistribution();
   const { data: paymentBreakdown } = usePaymentBreakdown();
 
   if (isLoading) return <PageLoader label="Loading dashboard..." />;

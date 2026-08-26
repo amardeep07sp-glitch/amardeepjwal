@@ -138,4 +138,12 @@ export const customerRepository = {
   findAllForExport(filter = {}) {
     return Customer.find(filter).populate(POPULATE_FIELDS).sort({ createdAt: -1 });
   },
+
+  // Broadcast's own bulk-read - a lean cursor rather than loading every
+  // customer into memory at once, since "all customers" can be an
+  // unbounded number (see broadcast.service.js#processBroadcast, which is
+  // the only caller of this).
+  streamAllContacts() {
+    return Customer.find({}).select('_id email phone').lean().cursor();
+  },
 };

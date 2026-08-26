@@ -9,6 +9,7 @@ import {
 } from './footerColumn.validation.js';
 import {
   listFooterColumns,
+  listPublicFooterColumns,
   createFooterColumn,
   updateFooterColumn,
   deleteFooterColumn,
@@ -16,6 +17,10 @@ import {
 
 const router = Router();
 const manageCms = authorize(...PRIVILEGED_ROLES);
+
+// Must come before the admin `GET /` (protect-gated) - the storefront
+// Footer has no admin session.
+router.get('/public', listPublicFooterColumns);
 
 router.get('/', protect, listFooterColumns);
 router.post('/', protect, manageCms, validate(createFooterColumnSchema), createFooterColumn);

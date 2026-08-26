@@ -1,4 +1,5 @@
 import { OrderShipment } from './orderShipment.model.js';
+import { SHIPMENT_STATUSES } from './order.constants.js';
 
 const POPULATE_FIELDS = [{ path: 'order', select: 'orderNumber customer' }];
 
@@ -31,5 +32,19 @@ export const orderShipmentRepository = {
 
   updateById(id, data, session) {
     return OrderShipment.findByIdAndUpdate(id, data, { new: true, session: session ?? undefined });
+  },
+
+  // Phase 59 automation sweep candidates - past their own estimate,
+  // not yet delivered/failed, not already notified once.
+  findDelayedUnnotified(now) {
+    return OrderShipment.find({
+      status: { $nin: [SHIPMENT_STATUSES.DELIVERED, SHIPMENT_STATUSES.FAILED] },
+      estimatedDelivery: { $ne: null, $lt: now },
+      delayNotifiedAt: null,
+    }).populate(POPULATE_FIELDS);
+  },
+
+  markDelayNotified(id) {
+    return OrderShipment.findByIdAndUpdate(id, { delayNotifiedAt: new Date() });
   },
 };

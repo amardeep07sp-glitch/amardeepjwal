@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Gem, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 // Fills its parent completely (the hero slide uses it as a full-bleed
 // background, with a scrim + text overlaid on top - see HeroBanner.jsx).
@@ -24,11 +24,15 @@ export function HeroVisual({ image }) {
         transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div
-        className="relative flex size-40 items-center justify-center rounded-full bg-card/80 shadow-lg ring-1 ring-primary/20 sm:size-52"
-        animate={{ scale: [1, 1.05, 1] }}
+        className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden rounded-2xl border-2 border-primary/40 bg-[#2A080C] p-2 shadow-2xl ring-4 ring-primary/15"
+        animate={{ scale: [1, 1.03, 1] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <Gem className="size-16 text-primary sm:size-20" strokeWidth={1.25} />
+        <img
+          src="/logo.jpg"
+          alt="Amardeep Shitala Prasad"
+          className="h-full w-auto max-w-[200px] sm:max-w-[260px] rounded-xl object-contain"
+        />
       </motion.div>
 
       <motion.span

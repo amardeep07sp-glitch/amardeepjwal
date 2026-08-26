@@ -16,6 +16,20 @@ export const authLimiter = rateLimit({
   message: { success: false, statusCode: 429, message: 'Too many attempts, please try again later.' },
 });
 
+// Support/issue/feedback/review-report creation - the general apiLimiter
+// (300/15min) already covers every authenticated route, but that ceiling
+// is far too generous for content-creation endpoints specifically (Phase
+// 54's abuse-prevention ask): a buggy or malicious client could still
+// flood the ticket/issue/feedback queues near that limit. A tighter,
+// dedicated ceiling here doesn't replace apiLimiter, it stacks under it.
+export const supportCreateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, statusCode: 429, message: 'Too many submissions, please try again later.' },
+});
+
 // CIP's public event-ingestion endpoint - "High-volume event ingestion"
 // (Phase 12 Performance section) needs a ceiling suited to a single page
 // load firing several events, not the 300-per-15-minutes ceiling every
@@ -27,4 +41,18 @@ export const eventLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, statusCode: 429, message: 'Too many events, please slow down.' },
+});
+
+// A broadcast fans a single request out to every customer on email +
+// WhatsApp at once - the general apiLimiter ceiling (300/15min) is far too
+// generous for an action this expensive/high-blast-radius. A tight,
+// dedicated ceiling here (not a replacement for apiLimiter, stacks under
+// it) makes it hard to accidentally (or maliciously, from a compromised
+// admin session) spam the entire customer base.
+export const broadcastLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, statusCode: 429, message: 'Too many broadcasts sent recently, please try again later.' },
 });

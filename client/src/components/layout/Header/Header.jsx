@@ -1,19 +1,16 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { isBrowsePath } from '@/config/navConfig';
 import { MainHeader } from './MainHeader';
 import { CategoryNav } from './CategoryNav';
 import { MobileMenu } from './MobileMenu';
 
-// NOTE: two attempts at a scroll-triggered "compact header" treatment were
-// tried here and both reverted after producing broken layouts in practice
-// (the whole header disappearing, then the icon row rendering broken/
-// floating) that couldn't be reliably root-caused or re-verified without
-// live browser devtools access. Restored to the simple, long-proven
-// shadow-on-scroll-only behavior - do not re-attempt a scroll-driven
-// collapse/compact here without a way to actually see the rendered result.
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { pathname } = useLocation();
+  const isBrowse = isBrowsePath(pathname);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8);
@@ -26,12 +23,12 @@ export function Header() {
     <>
       <header
         className={cn(
-          'sticky top-0 z-50 min-w-0 border-b border-border bg-background transition-shadow duration-200',
-          isScrolled && 'shadow-md'
+          'sticky top-0 z-50 min-w-0 border-b border-[#EBE3D3] bg-white/98 backdrop-blur-xl transition-all duration-300',
+          isScrolled ? 'shadow-[0_8px_30px_rgba(0,0,0,0.06)]' : 'shadow-xs'
         )}
       >
         <MainHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
-        <CategoryNav />
+        {isBrowse && <CategoryNav />}
       </header>
 
       <MobileMenu open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen} />

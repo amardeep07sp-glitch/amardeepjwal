@@ -1,12 +1,4 @@
 import { cn } from '@/lib/utils';
-
-// The ONE place every routed page's outer width/padding is defined. Before
-// this existed, every page hand-rolled its own `mx-auto max-w-7xl px-4...`
-// wrapper independently - five different vertical-padding value-sets had
-// drifted in across six page files (see ProductListingPage vs
-// CollectionDetailPage vs AllCategoriesPage), each accidentally a bit
-// different. Changing spacing "everywhere at once" now means editing the
-// TOP/BOTTOM maps here, not hunting down every page file.
 const TOP = {
   none: '',
   sm: 'pt-4 sm:pt-5 lg:pt-6',

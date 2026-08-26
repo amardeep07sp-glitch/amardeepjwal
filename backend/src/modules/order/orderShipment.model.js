@@ -14,6 +14,10 @@ const orderShipmentSchema = new mongoose.Schema(
     status: { type: String, enum: Object.values(SHIPMENT_STATUSES), default: SHIPMENT_STATUSES.PENDING, index: true },
     estimatedDelivery: { type: Date, default: null },
     deliveredAt: { type: Date, default: null },
+    // Phase 59 automation - set once the delayed-delivery sweep has
+    // notified the customer for THIS shipment, so a still-delayed
+    // shipment doesn't get re-notified on every sweep tick.
+    delayNotifiedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

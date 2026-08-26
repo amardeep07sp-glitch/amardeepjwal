@@ -33,6 +33,7 @@ const mockOrderCsv = { buildOrdersCsv: jest.fn(), buildOrdersExcel: jest.fn() };
 const mockAddressRepo = { findById: jest.fn() };
 const mockCustomerRepo = { findRawById: jest.fn() };
 const mockAccountingEvents = { recordSaleInvoice: jest.fn(), recordSaleCancellation: jest.fn(), recordCogs: jest.fn() };
+const mockCouponService = { releaseRedemptionForOrder: jest.fn() };
 
 const mockSession = {
   startTransaction: jest.fn(),
@@ -65,6 +66,10 @@ jest.unstable_mockModule('../src/modules/customer/customer.repository.js', () =>
 // loads account.model.js, which calls `new mongoose.Schema(...)` at
 // module-load time.
 jest.unstable_mockModule('../src/modules/accounting/accountingEvents.service.js', () => ({ accountingEvents: mockAccountingEvents }));
+// Mocked for the same reason as accountingEvents.service.js above -
+// coupon.service.js transitively loads coupon.model.js, which calls `new
+// mongoose.Schema(...)` at module-load time.
+jest.unstable_mockModule('../src/modules/coupon/coupon.service.js', () => ({ couponService: mockCouponService }));
 jest.unstable_mockModule('../src/modules/media/media.repository.js', () => ({ mediaRepository: mockMediaRepo }));
 // Mocked (not just its dependency) because priceCalculator.js pulls in
 // pricing.schema.js for a constant, and pricing.schema.js calls `new
@@ -104,6 +109,7 @@ beforeEach(() => {
     mockAddressRepo,
     mockCustomerRepo,
     mockAccountingEvents,
+    mockCouponService,
     mockSession,
   ].forEach((mockObj) => Object.values(mockObj).forEach((fn) => fn.mockReset?.()));
 });

@@ -48,7 +48,7 @@ export function CountBadge({ value }) {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-          className="absolute -top-1.5 -right-1.5 flex size-4.5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground"
+          className="absolute -top-1 -right-1 flex size-4.5 min-w-4.5 items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#B8860B] text-[10px] font-bold text-white shadow-xs ring-2 ring-white"
         >
           {display}
         </motion.span>

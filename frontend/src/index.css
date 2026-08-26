@@ -4,6 +4,16 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource/playfair-display/400.css";
 @import "@fontsource/playfair-display/700.css";
+/* Loaded ONLY so the Settings -> Typography picker's live preview
+   (SettingsPage.jsx) can render each option in its real font, not a
+   generic serif/sans-serif fallback - the admin panel itself never uses
+   these for its own UI. Same curated allowlist as client/src/index.css's
+   storefront-facing import (constants/typography.js). */
+@import "@fontsource/cormorant-garamond/400.css";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
 
 /* =========================================================
    GLOBAL DESIGN SYSTEM - single source of truth

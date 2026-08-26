@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { CATALOG_STATUSES, GENDERS, OCCASIONS } from '../../constants/catalog.js';
+import { CATALOG_STATUSES, GENDERS, OCCASIONS, JEWELLERY_METALS, GEMSTONE_TYPES } from '../../constants/catalog.js';
 import { slugify } from '../../utils/slugify.js';
 import { pricingSchema } from './pricing/pricing.schema.js';
 
@@ -48,8 +48,29 @@ const productSchema = new mongoose.Schema(
     gender: { type: String, enum: Object.values(GENDERS), default: null, index: true },
     occasion: [{ type: String, enum: Object.values(OCCASIONS) }],
 
+    // Real, first-class jewellery classification - deliberately NOT the
+    // generic Attribute system (see constants/catalog.js's header comment
+    // on why: that data is admin-optional and Variant-scoped, so a
+    // promotion rule targeting it could never reliably match). `purity` is
+    // intentionally a plain string, not tied to `metal` at the schema
+    // level (validated instead at the admin form / zod layer against
+    // JEWELLERY_PURITIES_BY_METAL) - Mongoose has no clean way to make an
+    // enum conditional on a sibling field.
+    metal: { type: String, enum: Object.values(JEWELLERY_METALS), default: null, index: true },
+    purity: { type: String, trim: true, default: '' },
+    gemstoneType: { type: String, enum: Object.values(GEMSTONE_TYPES), default: GEMSTONE_TYPES.NONE, index: true },
+
     seo: { type: seoSchema, default: () => ({}) },
     pricing: { type: pricingSchema, default: () => ({}) },
+
+    // Denormalized from Review (approved-only) - recomputed and written by
+    // review.service.js any time a review's approved-ness could have
+    // changed, never hand-edited. Kept on Product (not joined per-request)
+    // so a listing page's rating badge costs nothing extra, same
+    // "denormalize the read-hot aggregate" precedent as Category's own
+    // productCount.
+    ratingAverage: { type: Number, default: 0, min: 0, max: 5 },
+    reviewCount: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

@@ -58,6 +58,38 @@ export const sessionRepository = {
     ]).then(([items, total]) => ({ items, total }));
   },
 
+  // Sitewide engagement KPIs (avg time on site, bounce rate %) - only ever
+  // over CLOSED sessions (`endTime: {$ne: null}`), since durationSeconds/
+  // isBounce are both meaningless (still 0/false) until closeSession runs
+  // - an open session isn't "not a bounce", it just hasn't finished yet.
+  async getEngagementSummary({ dateFrom, dateTo } = {}) {
+    const filter = { endTime: { $ne: null } };
+    if (dateFrom || dateTo) {
+      filter.startTime = {};
+      if (dateFrom) filter.startTime.$gte = new Date(dateFrom);
+      if (dateTo) filter.startTime.$lte = new Date(dateTo);
+    }
+    const [row] = await Session.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          totalSessions: { $sum: 1 },
+          bouncedSessions: { $sum: { $cond: ['$isBounce', 1, 0] } },
+          totalDurationSeconds: { $sum: '$durationSeconds' },
+        },
+      },
+    ]);
+
+    const totalSessions = row?.totalSessions ?? 0;
+    return {
+      totalSessions,
+      bouncedSessions: row?.bouncedSessions ?? 0,
+      bounceRate: totalSessions > 0 ? Math.round(((row.bouncedSessions ?? 0) / totalSessions) * 1000) / 10 : 0,
+      averageDurationSeconds: totalSessions > 0 ? Math.round((row.totalDurationSeconds ?? 0) / totalSessions) : 0,
+    };
+  },
+
   deleteByVisitor(visitorId) {
     return Session.deleteMany({ visitorId });
   },

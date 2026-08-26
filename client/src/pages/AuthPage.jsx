@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Gem, Lock, Mail, Phone, Sparkles, User } from 'lucide-react';
 import { useLogin, useRegister } from '@/features/auth/authApi';
 import { useAuthStore } from '@/store/authStore';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { PageContainer } from '@/components/global/PageContainer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -77,7 +78,14 @@ function SignUpForm({ onSuccess }) {
 
       <Label className="flex items-start gap-2.5 text-sm font-normal text-muted-foreground">
         <Checkbox checked={agreed} onCheckedChange={setAgreed} className="mt-0.5" />
-        I agree to the <span className="text-primary">Terms &amp; Conditions</span> and <span className="text-primary">Privacy Policy</span>
+        I agree to the{' '}
+        <Link to="/pages/terms-conditions" target="_blank" className="text-primary hover:underline">
+          Terms &amp; Conditions
+        </Link>{' '}
+        and{' '}
+        <Link to="/pages/privacy-policy" target="_blank" className="text-primary hover:underline">
+          Privacy Policy
+        </Link>
       </Label>
 
       {register.isError && <p className="text-sm text-destructive">{register.error.message}</p>}
@@ -85,6 +93,9 @@ function SignUpForm({ onSuccess }) {
       <Button type="submit" variant="luxury" size="xl" shape="pill" loading={register.isPending} disabled={!agreed}>
         Create Account
       </Button>
+
+      <OrDivider />
+      <GoogleSignInButton onSuccess={onSuccess} />
     </form>
   );
 }
@@ -107,13 +118,29 @@ function SignInForm({ onSuccess }) {
         <Lock className="pointer-events-none absolute top-1/2 left-4 size-4.5 -translate-y-1/2 text-muted-foreground" />
         <PasswordInput className="pl-11" placeholder="Password" required value={form.password} onChange={set('password')} />
       </div>
+      <Link to="/forgot-password" className="-mt-2 self-end text-xs font-medium text-primary hover:underline">
+        Forgot password?
+      </Link>
 
       {login.isError && <p className="text-sm text-destructive">{login.error.message}</p>}
 
       <Button type="submit" variant="luxury" size="xl" shape="pill" loading={login.isPending}>
         Log In
       </Button>
+
+      <OrDivider />
+      <GoogleSignInButton onSuccess={onSuccess} />
     </form>
+  );
+}
+
+function OrDivider() {
+  return (
+    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      <span className="h-px flex-1 bg-border" />
+      OR
+      <span className="h-px flex-1 bg-border" />
+    </div>
   );
 }
 

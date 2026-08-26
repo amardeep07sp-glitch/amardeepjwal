@@ -138,7 +138,10 @@ export default function MyOrdersPage() {
 
   return (
     <AccountLayout title="My Orders" subtitle="Track, return, or buy items again" icon={Package} breadcrumbLabel="My Orders">
-      <div className="mb-5 flex flex-wrap gap-2">
+      {/* Smaller + outlined vs. AccountMobileNav's pills right above (same
+          page, different job - that's account section navigation, this is
+          an in-page filter) so the two rows don't blend into one another. */}
+      <div className="scrollbar-none mb-5 flex items-center gap-1.5 overflow-x-auto pb-0.5">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.label}
@@ -148,8 +151,10 @@ export default function MyOrdersPage() {
               setPage(1);
             }}
             className={cn(
-              'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
-              statusFilter === tab.value ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
+              'shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors',
+              statusFilter === tab.value
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-card text-muted-foreground ring-1 ring-border hover:text-foreground'
             )}
           >
             {tab.label}

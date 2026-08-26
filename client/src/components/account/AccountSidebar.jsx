@@ -1,20 +1,26 @@
 import { NavLink } from 'react-router-dom';
-import { Heart, LogOut, MapPin, Package, User } from 'lucide-react';
+import { Gift, Heart, LifeBuoy, LogOut, MapPin, Package, User } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useLogout } from '@/features/auth/authApi';
 import { useMyWishlist } from '@/features/storefront/storefrontApi';
 import { cn } from '@/lib/utils';
 
-// Only real destinations - My Dashboard/Notifications/Offers/Returns/Help
-// (shown in the reference mockups) each need their own backend feature
-// that doesn't exist yet (a notification feed, a public offers browser, a
-// customer-facing returns flow, a support desk) - listing them here would
-// be a dead link, not a shortcut. Add an entry only once its page exists,
-// same rule the admin sidebar (adminNav.js) already follows.
-const NAV_ITEMS = [
+// Only real destinations - My Dashboard/Notifications/Offers (shown in the
+// reference mockups) still need their own backend feature that doesn't
+// exist yet (a notification feed, a public offers browser) - listing them
+// here would be a dead link, not a shortcut. "Support" was the same kind
+// of placeholder until the Help/Support/Issue-Reporting system shipped;
+// now that /support is real, it belongs here. Add an entry only once its
+// page exists, same rule the admin sidebar (adminNav.js) already follows.
+// Exported so AccountMobileNav.jsx (the lg:hidden horizontal pill nav)
+// stays driven by the exact same list - one place to add/remove a
+// destination for both breakpoints.
+export const ACCOUNT_NAV_ITEMS = [
   { label: 'My Orders', to: '/orders', icon: Package },
   { label: 'Wishlist', to: '/wishlist', icon: Heart, countKey: 'wishlist' },
+  { label: 'My Rewards', to: '/rewards', icon: Gift },
   { label: 'My Addresses', to: '/addresses', icon: MapPin },
+  { label: 'Help & Support', to: '/support', icon: LifeBuoy },
   { label: 'My Profile', to: '/profile', icon: User },
 ];
 
@@ -39,7 +45,7 @@ export function AccountSidebar({ className }) {
       </div>
 
       <nav className="flex flex-col gap-1 rounded-2xl bg-card p-2 ring-1 ring-border">
-        {NAV_ITEMS.map((item) => (
+        {ACCOUNT_NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

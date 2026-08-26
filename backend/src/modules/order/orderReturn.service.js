@@ -7,6 +7,7 @@ import { orderAudit } from './order.audit.js';
 import { inventoryRepository } from '../inventory/inventory.repository.js';
 import { inventoryService } from '../inventory/inventory.service.js';
 import { inventoryLedgerService } from '../inventory/inventoryLedger.service.js';
+import { couponService } from '../coupon/coupon.service.js';
 import { RETURN_STATUSES, RETURN_STATUS_TRANSITIONS, ORDER_ITEM_STATUSES, ORDER_TIMELINE_EVENTS } from './order.constants.js';
 
 const buildPaginationMeta = (page, limit, totalItems) => ({
@@ -140,6 +141,15 @@ export const orderReturnService = {
       await session.commitTransaction();
 
       await Promise.all(touchedInventoryIds.map((id) => inventoryLedgerService.evaluateAlertsAfterCommit(id)));
+
+      // Restock is the return flow's real completion point (items
+      // physically back, order financially settled) - the coupon's own
+      // cancellationPolicy runs here, same as order.service.js#cancelOrder,
+      // with refund:true so the ledger row records this as a refund-driven
+      // release rather than a plain cancellation.
+      if (order.couponCode) {
+        await couponService.releaseRedemptionForOrder(orderReturn.order, { refund: true });
+      }
 
       return orderReturn;
     } catch (err) {

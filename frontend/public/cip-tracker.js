@@ -48,7 +48,7 @@
         window.localStorage.setItem(VISITOR_KEY, id);
       }
       return id;
-    } catch (e) {
+    } catch {
       return uuid(); // storage unavailable (private browsing) - degrade to a per-call id
     }
   }
@@ -61,7 +61,7 @@
         window.sessionStorage.setItem(SESSION_KEY, id);
       }
       return id;
-    } catch (e) {
+    } catch {
       return uuid();
     }
   }
@@ -70,7 +70,7 @@
     try {
       var value = window.localStorage.getItem(CONSENT_KEY);
       return value !== 'false'; // no preference yet = tracked, matches consent.model.js's default
-    } catch (e) {
+    } catch {
       return true;
     }
   }
@@ -95,14 +95,14 @@
     try {
       var stored = window.sessionStorage.getItem(LANDING_KEY);
       if (stored) return JSON.parse(stored);
-    } catch (e) {
+    } catch {
       /* fall through to compute fresh */
     }
     var utm = parseUtmFromUrl();
     var context = Object.assign({}, utm, { referrer: document.referrer || '', landingPage: window.location.pathname });
     try {
       window.sessionStorage.setItem(LANDING_KEY, JSON.stringify(context));
-    } catch (e) {
+    } catch {
       /* storage unavailable - context still returned for this call */
     }
     return context;
@@ -161,7 +161,7 @@
     setConsent: function (analyticsConsent, marketingConsent) {
       try {
         window.localStorage.setItem(CONSENT_KEY, String(analyticsConsent));
-      } catch (e) {
+      } catch {
         /* ignore - consent still applied for this page load via the closure below */
       }
       fetch(API_BASE + '/cip/privacy/consent', {

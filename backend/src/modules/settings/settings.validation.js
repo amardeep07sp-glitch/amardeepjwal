@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { HEADING_FONT_VALUES, BODY_FONT_VALUES } from '../../constants/typography.js';
 
 export const updateSettingsSchema = z.object({
   body: z.object({
@@ -26,6 +27,12 @@ export const updateSettingsSchema = z.object({
         metaTitle: z.string().optional(),
         metaDescription: z.string().optional(),
         ogImageMedia: z.string().optional().nullable(),
+      })
+      .optional(),
+    typography: z
+      .object({
+        headingFont: z.enum(HEADING_FONT_VALUES).optional(),
+        bodyFont: z.enum(BODY_FONT_VALUES).optional(),
       })
       .optional(),
     legalBusinessName: z.string().optional(),

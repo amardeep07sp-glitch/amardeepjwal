@@ -1,6 +1,16 @@
 import { z } from 'zod';
 import { ADDRESS_TYPES, GENDERS } from '../customer/customer.constants.js';
 import { PAYMENT_METHODS, ORDER_STATUSES } from '../order/order.constants.js';
+import { TICKET_CATEGORY_VALUES, TICKET_PRIORITY_VALUES, TICKET_STATUS_VALUES } from '../support/support.constants.js';
+import { ISSUE_CATEGORY_VALUES, ISSUE_STATUS_VALUES } from '../issue/issue.constants.js';
+import { FEEDBACK_CATEGORY_VALUES } from '../feedback/feedback.constants.js';
+
+export const recordLoginLocationSchema = z.object({
+  body: z.object({
+    lat: z.coerce.number().min(-90).max(90),
+    lng: z.coerce.number().min(-180).max(180),
+  }),
+});
 
 const addressBody = z.object({
   type: z.enum(Object.values(ADDRESS_TYPES)).optional(),
@@ -59,10 +69,25 @@ export const removeWishlistParamSchema = z.object({
   query: z.object({ variant: z.string().optional() }),
 });
 
+// Preview items carry the cart page's own client-computed unitPrice/total
+// (same non-authoritative status the old client-reported `subtotal` had) -
+// only real for scope matching (metal/category/etc need a productId either
+// way); checkout() re-derives everything from the real order's OrderItems
+// and is the only path money actually depends on.
+const couponPreviewItem = z.object({
+  product: z.string().min(1),
+  variant: z.string().optional().nullable(),
+  quantity: z.coerce.number().min(1),
+  unitPrice: z.coerce.number().min(0),
+  total: z.coerce.number().min(0),
+});
+
 export const applyCouponSchema = z.object({
   body: z.object({
     code: z.string().trim().min(1, 'Coupon code is required'),
+    items: z.array(couponPreviewItem).min(1, 'Cart is empty'),
     subtotal: z.coerce.number().min(0),
+    shippingCharge: z.coerce.number().min(0).optional().default(0),
   }),
 });
 
@@ -91,5 +116,90 @@ export const updateMyProfileSchema = z.object({
     phone: z.string().trim().min(1, 'Phone number is required').optional(),
     dateOfBirth: z.coerce.date().optional().nullable(),
     gender: z.enum(Object.values(GENDERS)).optional(),
+  }),
+});
+
+export const ledgerQuerySchema = z.object({
+  query: z.object({
+    page: z.coerce.number().min(1).default(1),
+    limit: z.coerce.number().min(1).max(50).default(20),
+  }),
+});
+
+export const requestReturnSchema = z.object({
+  params: z.object({ id: z.string() }),
+  body: z.object({
+    items: z
+      .array(z.object({ orderItem: z.string().min(1), returnQuantity: z.coerce.number().int().min(1) }))
+      .min(1, 'Select at least one item to return'),
+    reason: z.string().trim().min(1, 'Please tell us why you are returning this').optional(),
+  }),
+});
+
+export const trackOrderSchema = z.object({
+  body: z.object({
+    orderNumber: z.string().trim().min(1, 'Order number is required'),
+    phone: z.string().trim().min(4, 'Phone number is required'),
+  }),
+});
+
+// ---- Support / Issues / Feedback ----
+// `context`/`metadata` arrive as a JSON string (multipart form fields are
+// always strings - same reasoning as media's own uploadMediaSchema) -
+// parsed in storefront.controller.js, never trusted structurally beyond
+// "valid JSON or empty".
+export const createMyTicketSchema = z.object({
+  body: z.object({
+    subject: z.string().trim().min(1, 'Subject is required'),
+    category: z.enum(TICKET_CATEGORY_VALUES).optional(),
+    priority: z.enum(TICKET_PRIORITY_VALUES).optional(),
+    context: z.string().optional(),
+    message: z.string().trim().optional(),
+  }),
+});
+
+export const listMyTicketsQuerySchema = z.object({
+  query: z.object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().max(50).default(20),
+    status: z.enum(TICKET_STATUS_VALUES).optional(),
+  }),
+});
+
+export const ticketIdParamSchema = z.object({ params: z.object({ id: z.string() }) });
+
+export const replyToTicketSchema = z.object({
+  params: z.object({ id: z.string() }),
+  body: z.object({ content: z.string().trim().min(1, 'Message is required') }),
+});
+
+export const createMyIssueSchema = z.object({
+  body: z.object({
+    category: z.enum(ISSUE_CATEGORY_VALUES),
+    subCategory: z.string().trim().optional(),
+    entityType: z.string().trim().optional(),
+    entityId: z.string().trim().optional(),
+    description: z.string().trim().min(1, 'Please describe the issue'),
+    metadata: z.string().optional(),
+  }),
+});
+
+export const listMyIssuesQuerySchema = z.object({
+  query: z.object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().max(50).default(20),
+    status: z.enum(ISSUE_STATUS_VALUES).optional(),
+  }),
+});
+
+export const issueIdParamSchema = z.object({ params: z.object({ id: z.string() }) });
+
+export const submitFeedbackSchema = z.object({
+  body: z.object({
+    rating: z.coerce.number().int().min(1).max(5).optional().nullable(),
+    category: z.enum(FEEDBACK_CATEGORY_VALUES).optional(),
+    message: z.string().trim().min(1, 'Feedback message is required'),
+    pageContext: z.string().trim().optional(),
+    orderId: z.string().optional().nullable(),
   }),
 });

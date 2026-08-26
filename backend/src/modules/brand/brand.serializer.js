@@ -1,5 +1,22 @@
 import { serializeMediaRef } from '../media/media.serializer.js';
 
+const serializeShowcase = (showcase) => ({
+  heroTagline: showcase?.heroTagline ?? '',
+  heroLocalName: showcase?.heroLocalName ?? '',
+  heroImageMedia: serializeMediaRef(showcase?.heroImageMedia),
+  storyTitle: showcase?.storyTitle ?? '',
+  storyBody: showcase?.storyBody ?? '',
+  storyImageMedia: serializeMediaRef(showcase?.storyImageMedia),
+  editions: (showcase?.editions ?? []).map((e) => ({
+    name: e.name,
+    localName: e.localName ?? '',
+    tagline: e.tagline ?? '',
+    categorySlug: e.categorySlug ?? '',
+  })),
+  craftPillars: (showcase?.craftPillars ?? []).map((p) => ({ title: p.title, description: p.description ?? '', icon: p.icon ?? '' })),
+  trustBenefits: (showcase?.trustBenefits ?? []).map((b) => ({ title: b.title, description: b.description ?? '', icon: b.icon ?? '' })),
+});
+
 export const serializeBrand = (brand) => {
   const plain = typeof brand.toObject === 'function' ? brand.toObject() : brand;
 
@@ -17,6 +34,7 @@ export const serializeBrand = (brand) => {
     isFeatured: plain.isFeatured,
     isVisible: plain.isVisible,
     order: plain.order,
+    showcase: serializeShowcase(plain.showcase),
     seo: {
       metaTitle: plain.seo?.metaTitle ?? '',
       metaDescription: plain.seo?.metaDescription ?? '',
@@ -46,6 +64,7 @@ export const serializePublicBrand = (brand, { productCount = 0 } = {}) => {
     country: plain.country,
     website: plain.website,
     productCount,
+    showcase: serializeShowcase(plain.showcase),
     seo: {
       metaTitle: plain.seo?.metaTitle ?? '',
       metaDescription: plain.seo?.metaDescription ?? '',

@@ -19,16 +19,20 @@ export function DomainReportsTab({ reports }) {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
+  const [groupBy, setGroupBy] = useState('');
 
   const report = reports.find((r) => r.key === reportKey) ?? reports[0];
 
   useEffect(() => {
     setPage(1);
+    setGroupBy(report?.groupByOptions?.[0]?.value ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportKey, dateFrom, dateTo]);
 
   const params = {
     ...(report.dateRange && dateFrom ? { dateFrom } : {}),
     ...(report.dateRange && dateTo ? { dateTo } : {}),
+    ...(report.groupByOptions && groupBy ? { groupBy } : {}),
     ...(report.shape === 'paginated' ? { page, limit: DEFAULT_LIMIT } : {}),
   };
 
@@ -56,6 +60,18 @@ export function DomainReportsTab({ reports }) {
               <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
             </FormField>
           </>
+        )}
+        {report.groupByOptions && (
+          <FormField label="Group by" className="w-32">
+            <Select value={groupBy} onValueChange={setGroupBy}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {report.groupByOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
         )}
         {report.exportable && <ReportExportButtons endpoint={report.endpoint} params={params} reportKey={report.key} />}
       </div>

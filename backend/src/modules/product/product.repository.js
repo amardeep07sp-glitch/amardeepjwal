@@ -58,6 +58,14 @@ export const productRepository = {
     return Product.findById(id).session(session ?? null);
   },
 
+  // The promotion engine's own scope-matching read (coupon.service.js) -
+  // raw category/brand/collectionId/metal/purity/gemstoneType/pricing,
+  // regardless of publish status (a cart item's product must still be
+  // evaluable even if it's since been unpublished).
+  findRawByIds(ids) {
+    return Product.find({ _id: { $in: ids } }).select('category brand collectionId metal purity gemstoneType pricing');
+  },
+
   async create(data, session) {
     const [created] = await Product.create([data], { session: session ?? undefined });
     return created;
@@ -90,6 +98,14 @@ export const productRepository = {
     Object.assign(existing, data);
     await existing.save();
     return existing.populate(POPULATE_FIELDS);
+  },
+
+  // Dedicated, minimal write for review.service.js's rating aggregate -
+  // a direct findByIdAndUpdate (not the full updateById above) so writing
+  // a recomputed average/count never re-runs the slug/SKU save hooks or
+  // pulls in the full populate chain for what's just two numbers.
+  updateRatingSummary(id, { ratingAverage, reviewCount }) {
+    return Product.findByIdAndUpdate(id, { $set: { ratingAverage, reviewCount } });
   },
 
   deleteById(id) {

@@ -1,6 +1,7 @@
 import { Event } from './event.model.js';
 import { orderRepository } from '../order/order.repository.js';
 import { sessionService } from './session.service.js';
+import { visitorAnalyticsService } from './visitorAnalytics.service.js';
 import { searchAnalyticsService } from './searchAnalytics.service.js';
 import { productAnalyticsService } from './productAnalytics.service.js';
 import { categoryAnalyticsService } from './categoryAnalytics.service.js';
@@ -19,11 +20,12 @@ export const executiveCipDashboardService = {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
-    const [activeSessions, todaysSearches, returningCustomers, conversion] = await Promise.all([
+    const [activeSessions, todaysSearches, returningCustomers, conversion, engagement] = await Promise.all([
       sessionService.getActiveSessionCount(),
       Event.countDocuments({ eventType: 'search', occurredAt: { $gte: startOfToday } }),
       orderRepository.countReturningCustomers(),
       this._getConversionRate({ dateFrom: startOfToday.toISOString() }),
+      visitorAnalyticsService.getEngagementSummary({ dateFrom: startOfToday.toISOString() }),
     ]);
 
     return {
@@ -32,6 +34,8 @@ export const executiveCipDashboardService = {
       todaysSearches,
       returningCustomers,
       conversionRate: conversion.conversionRate,
+      bounceRate: engagement.bounceRate,
+      avgSessionMinutes: round2(engagement.averageDurationSeconds / 60),
     };
   },
 

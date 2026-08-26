@@ -1,0 +1,1 @@
+export { LocationPrompt } from './LocationPrompt';

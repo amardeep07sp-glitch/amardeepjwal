@@ -5,6 +5,7 @@ import navbarRoutes from '../modules/navbar/navbar.routes.js';
 import bannerRoutes from '../modules/banner/banner.routes.js';
 import pageRoutes from '../modules/page/page.routes.js';
 import footerColumnRoutes from '../modules/footerColumn/footerColumn.routes.js';
+import newsletterRoutes from '../modules/newsletter/newsletter.routes.js';
 import homepageSectionRoutes from '../modules/homepageSection/homepageSection.routes.js';
 import categoryRoutes from '../modules/category/category.routes.js';
 import collectionRoutes from '../modules/collection/collection.routes.js';
@@ -13,6 +14,8 @@ import attributeGroupRoutes from '../modules/attributeGroup/attributeGroup.route
 import attributeRoutes from '../modules/attribute/attribute.routes.js';
 import attributeValueRoutes from '../modules/attributeValue/attributeValue.routes.js';
 import productRoutes from '../modules/product/product.routes.js';
+import reviewRoutes from '../modules/review/review.routes.js';
+import metalRateRoutes from '../modules/metalRate/metalRate.routes.js';
 import mediaRoutes from '../modules/media/media.routes.js';
 import inventoryRoutes from '../modules/inventory/inventory.routes.js';
 import warehouseRoutes from '../modules/inventory/warehouse.routes.js';
@@ -26,6 +29,7 @@ import addressRoutes from '../modules/address/address.routes.js';
 import customerRoutes from '../modules/customer/customer.routes.js';
 import orderRoutes from '../modules/order/order.routes.js';
 import couponRoutes from '../modules/coupon/coupon.routes.js';
+import campaignRoutes from '../modules/campaign/campaign.routes.js';
 import orderPaymentRoutes from '../modules/order/orderPayment.routes.js';
 import orderShipmentRoutes from '../modules/order/orderShipment.routes.js';
 import orderReturnRoutes from '../modules/order/orderReturn.routes.js';
@@ -76,7 +80,14 @@ import cipSegmentationRoutes from '../modules/cip/segmentation.routes.js';
 import cipReportsRoutes from '../modules/cip/cipReports.routes.js';
 import cipExecutiveDashboardRoutes from '../modules/cip/executiveCipDashboard.routes.js';
 import cipPrivacyRoutes from '../modules/cip/privacy.routes.js';
+import publicGeoRoutes from '../modules/cip/publicGeo.routes.js';
 import storefrontRoutes from '../modules/storefront/storefront.routes.js';
+import helpRoutes from '../modules/help/help.routes.js';
+import supportRoutes from '../modules/support/support.routes.js';
+import issueRoutes from '../modules/issue/issue.routes.js';
+import feedbackRoutes from '../modules/feedback/feedback.routes.js';
+import supportReportsRoutes from '../modules/reports/supportReports.routes.js';
+import broadcastRoutes from '../modules/broadcast/broadcast.routes.js';
 
 const router = Router();
 
@@ -86,6 +97,7 @@ router.use('/navbar', navbarRoutes);
 router.use('/banners', bannerRoutes);
 router.use('/pages', pageRoutes);
 router.use('/footer-columns', footerColumnRoutes);
+router.use('/newsletter', newsletterRoutes);
 router.use('/homepage-sections', homepageSectionRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/collections', collectionRoutes);
@@ -94,6 +106,8 @@ router.use('/attribute-groups', attributeGroupRoutes);
 router.use('/attributes', attributeRoutes);
 router.use('/attribute-values', attributeValueRoutes);
 router.use('/products', productRoutes);
+router.use('/reviews', reviewRoutes);
+router.use('/metal-rates', metalRateRoutes);
 router.use('/media', mediaRoutes);
 router.use('/inventory', inventoryRoutes);
 router.use('/warehouses', warehouseRoutes);
@@ -106,7 +120,11 @@ router.use('/activity-logs', activityLogRoutes);
 router.use('/addresses', addressRoutes);
 router.use('/customers', customerRoutes);
 router.use('/orders', orderRoutes);
-router.use('/coupons', couponRoutes);
+// Renamed from the old flat "/coupons" mount to the "/promotions" REST
+// namespace once Coupon grew a real Campaign hierarchy above it - the
+// admin frontend's couponsApi.js base path was updated to match.
+router.use('/promotions/coupons', couponRoutes);
+router.use('/promotions/campaigns', campaignRoutes);
 router.use('/order-payments', orderPaymentRoutes);
 router.use('/order-shipments', orderShipmentRoutes);
 router.use('/order-returns', orderReturnRoutes);
@@ -157,10 +175,25 @@ router.use('/cip/segments', cipSegmentationRoutes);
 router.use('/cip/reports', cipReportsRoutes);
 router.use('/cip/dashboard', cipExecutiveDashboardRoutes);
 router.use('/cip/privacy', cipPrivacyRoutes);
+router.use('/geo', publicGeoRoutes);
 // A logged-in shopper's own cart-checkout/address/order-history surface -
 // deliberately its own module/mount point, not folded into /orders or
 // /addresses above, since those stay staff-only (see
 // storefront.routes.js's header comment) and this is customer-only.
 router.use('/storefront', storefrontRoutes);
+// Help Center CMS + public read (Phase 3-4) - public browse/search routes
+// live in the same module as the admin CMS actions (RBAC-gated per-route,
+// same convention as category/product), not split into a separate
+// /admin/* namespace this codebase doesn't otherwise use.
+router.use('/help', helpRoutes);
+// Support tickets - staff queue only; customer-facing creation/reply lives
+// under /storefront/support/tickets (storefront.routes.js), same "staff
+// route vs. customer route, same underlying service" split coupons/orders
+// already use.
+router.use('/support', supportRoutes);
+router.use('/issues', issueRoutes);
+router.use('/feedback', feedbackRoutes);
+router.use('/reports/support', supportReportsRoutes);
+router.use('/broadcasts', broadcastRoutes);
 
 export default router;

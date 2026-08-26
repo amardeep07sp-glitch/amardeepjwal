@@ -87,6 +87,25 @@ export default function CartPage() {
     if (appliedCoupon && items.length === 0) clearAppliedCoupon();
   }, [appliedCoupon, items.length, clearAppliedCoupon]);
 
+  // Same per-item live prices the subtotal itself is built from, reshaped
+  // to what /storefront/coupons/apply needs to evaluate scope rules
+  // (metal/category/collection/etc all key off productId, not price).
+  const couponItems = useMemo(
+    () =>
+      items.map((i) => {
+        const key = `${i.productId}:${i.variantId ?? ''}`;
+        const total = lineTotals[key]?.total ?? i.price * i.quantity;
+        return {
+          product: i.productId,
+          variant: i.variantId ?? null,
+          quantity: i.quantity,
+          unitPrice: total / i.quantity,
+          total,
+        };
+      }),
+    [items, lineTotals]
+  );
+
   const couponDiscount = appliedCoupon?.discountAmount ?? 0;
   const mrpSavings = Math.max(0, mrpSubtotal - subtotal);
   const total = Math.max(0, subtotal - couponDiscount);
@@ -106,7 +125,7 @@ export default function CartPage() {
       ))}
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="sticky top-[60px] lg:top-[113px] z-40 -mx-4 mb-4 flex flex-wrap items-center gap-4 bg-background/95 px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
           <BackButton />
           <Breadcrumb items={[{ label: 'Home', to: '/' }, { label: 'Shopping Cart' }]} />
         </div>
@@ -156,7 +175,7 @@ export default function CartPage() {
             </div>
 
             <div className="mt-6 rounded-2xl bg-card p-4 ring-1 ring-border sm:p-6">
-              <PromoCodeBox subtotal={subtotal} />
+              <PromoCodeBox items={couponItems} subtotal={subtotal} />
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">

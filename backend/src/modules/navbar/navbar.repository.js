@@ -5,6 +5,10 @@ export const navbarRepository = {
     return NavbarItem.find().populate('page', 'title slug').sort({ order: 1 });
   },
 
+  findActive() {
+    return NavbarItem.find({ isActive: true }).populate('page', 'title slug').sort({ order: 1 });
+  },
+
   findById(id) {
     return NavbarItem.findById(id);
   },

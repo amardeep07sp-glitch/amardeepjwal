@@ -6,6 +6,12 @@ export const pageService = {
     return pageRepository.findAll();
   },
 
+  async getPublishedBySlug(slug) {
+    const page = await pageRepository.findPublishedBySlug(slug);
+    if (!page) throw new ApiError(404, 'Page not found');
+    return page;
+  },
+
   createPage(data) {
     return pageRepository.create(data);
   },

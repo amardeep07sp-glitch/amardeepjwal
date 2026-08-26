@@ -39,6 +39,25 @@ const customerSnapshotSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Same immutable-snapshot philosophy, for the coupon rule that actually
+// applied - a later admin edit to the coupon's discountValue/rules (or
+// even deleting it) must never change what an already-placed order shows
+// or was actually charged. `couponCode`/`couponDiscount` (below) stay as
+// the flat scalars the rest of order.service.js's totals math already
+// reads; this is the richer, redundant record for history/receipts.
+const promotionSnapshotSchema = new mongoose.Schema(
+  {
+    couponId: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon', default: null },
+    campaignId: { type: mongoose.Schema.Types.ObjectId, ref: 'Campaign', default: null },
+    code: { type: String, default: '' },
+    discountType: { type: String, default: '' },
+    discountValue: { type: Number, default: 0 },
+    discountBase: { type: String, default: '' },
+    discountAmount: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
 const orderSchema = new mongoose.Schema(
   {
     orderNumber: { type: String, required: true, unique: true, index: true },
@@ -64,6 +83,7 @@ const orderSchema = new mongoose.Schema(
     discount: { type: Number, min: 0, default: 0 },
     couponCode: { type: String, trim: true, uppercase: true, default: null },
     couponDiscount: { type: Number, min: 0, default: 0 },
+    promotionSnapshot: { type: promotionSnapshotSchema, default: null },
     tax: { type: Number, min: 0, default: 0 },
     shippingCharge: { type: Number, min: 0, default: 0 },
     handlingCharge: { type: Number, min: 0, default: 0 },

@@ -13,6 +13,7 @@ import { barcodeRepository } from '../inventory/barcode.repository.js';
 import { addressRepository } from '../address/address.repository.js';
 import { customerRepository } from '../customer/customer.repository.js';
 import { accountingEvents } from '../accounting/accountingEvents.service.js';
+import { couponService } from '../coupon/coupon.service.js';
 import { orderRepository } from './order.repository.js';
 import { orderItemRepository } from './orderItem.repository.js';
 import { orderTimelineRepository } from './orderTimeline.repository.js';
@@ -228,11 +229,17 @@ export const orderService = {
   // storefront.service.js#checkout between createOrder and submitOrder,
   // once couponService.validateForCustomer has confirmed the code against
   // this order's own real (server-computed) subtotal.
-  async applyCoupon(orderId, { couponCode, couponDiscount }, userId) {
+  // `promotionSnapshot` (optional) freezes the coupon rule that actually
+  // applied - see order.model.js's own header comment on why this is
+  // separate from the flat couponCode/couponDiscount fields the totals
+  // math reads: a later admin edit to the coupon (or its deletion) must
+  // never change what this already-placed order shows or was charged.
+  async applyCoupon(orderId, { couponCode, couponDiscount, promotionSnapshot }, userId) {
     const order = await orderRepository.findRawById(orderId);
     if (!order) throw new ApiError(404, 'Order not found');
     order.couponCode = couponCode;
     order.couponDiscount = couponDiscount;
+    if (promotionSnapshot) order.promotionSnapshot = promotionSnapshot;
     order.updatedBy = userId;
     await order.save();
     return recalculateOrderTotals(orderId);
@@ -437,6 +444,14 @@ export const orderService = {
       await session.commitTransaction();
 
       await Promise.all(touchedInventoryIds.map((id) => inventoryLedgerService.evaluateAlertsAfterCommit(id)));
+
+      // Coupon usage/campaign spend restoration per the coupon's own
+      // cancellationPolicy - a separate step from the transaction above
+      // (its own atomic increment, not this order's session) since it's
+      // cross-collection state the coupon module alone owns.
+      if (order.couponCode) {
+        await couponService.releaseRedemptionForOrder(orderId, { refund: false });
+      }
 
       const fullOrder = await orderRepository.findById(orderId);
       await orderNotifications.notify('cancelled', fullOrder, fullOrder.customer);

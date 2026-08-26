@@ -1,4 +1,21 @@
 import mongoose from 'mongoose';
+import { HEADING_FONTS, HEADING_FONT_VALUES, BODY_FONTS, BODY_FONT_VALUES } from '../../constants/typography.js';
+
+// Site-wide font picker (Settings -> Typography) - see constants/
+// typography.js's header comment for why this is a closed enum, not
+// free text. `headingFont` drives the storefront's display/brand
+// typography (hero, section titles, product names - anything using the
+// `font-display` Tailwind utility); `bodyFont` drives everything else
+// (body copy, buttons, prices, form inputs). The header nav's own font
+// (Fraunces) is a separate, fixed brand-identity detail, not exposed
+// here - deliberately out of scope for this pass.
+const typographySchema = new mongoose.Schema(
+  {
+    headingFont: { type: String, enum: HEADING_FONT_VALUES, default: HEADING_FONTS.PLAYFAIR_DISPLAY },
+    bodyFont: { type: String, enum: BODY_FONT_VALUES, default: BODY_FONTS.INTER },
+  },
+  { _id: false }
+);
 
 const socialLinksSchema = new mongoose.Schema(
   {
@@ -61,6 +78,7 @@ const settingsSchema = new mongoose.Schema(
     footerCopyrightText: { type: String, trim: true, default: '' },
     socialLinks: { type: socialLinksSchema, default: () => ({}) },
     seoDefaults: { type: seoDefaultsSchema, default: () => ({}) },
+    typography: { type: typographySchema, default: () => ({}) },
     // --- Tax invoice ("Sold By") details - blank by default; the invoice
     // PDF omits any block whose fields are still empty rather than
     // printing placeholder text (see invoice.pdf.js). ---

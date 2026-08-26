@@ -1,6 +1,15 @@
 import mongoose from 'mongoose';
 import { Order } from './order.model.js';
 import { OrderItem } from './orderItem.model.js';
+import { ORDER_STATUSES } from './order.constants.js';
+
+// A "real" order for eligibility purposes (promotion engine's new/first-
+// order/existing-customer checks) - draft never left the cart, cancelled
+// never became a sale. Everything else (pending onward) reflects genuine
+// purchase intent, even if it later fails to ship.
+const REAL_ORDER_STATUSES = Object.values(ORDER_STATUSES).filter(
+  (status) => ![ORDER_STATUSES.DRAFT, ORDER_STATUSES.CANCELLED].includes(status)
+);
 
 const POPULATE_FIELDS = [
   { path: 'customer', select: 'displayName firstName lastName email phone customerCode' },
@@ -150,5 +159,11 @@ export const orderRepository = {
 
   findAllForExport(filter = {}) {
     return Order.find(filter).populate(POPULATE_FIELDS).sort({ createdAt: -1 });
+  },
+
+  // The promotion engine's own real "has this customer ordered before"
+  // check (coupon/eligibility.service.js) - never trusts a frontend flag.
+  countRealOrdersByCustomer(customerId) {
+    return Order.countDocuments({ customer: customerId, orderStatus: { $in: REAL_ORDER_STATUSES } });
   },
 };

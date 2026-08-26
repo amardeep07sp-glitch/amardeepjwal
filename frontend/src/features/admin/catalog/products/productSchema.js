@@ -39,6 +39,34 @@ export const OCCASIONS = [
   { value: 'gifting', label: 'Gifting' },
 ];
 
+// Real jewellery classification (must match backend/src/constants/catalog.js
+// JEWELLERY_METALS/JEWELLERY_PURITIES_BY_METAL/GEMSTONE_TYPES exactly) - the
+// one thing the promotion engine's "20% off Gold" style rules can actually
+// rely on existing for every product, unlike the optional Attribute system.
+export const METALS = [
+  { value: 'gold', label: 'Gold' },
+  { value: 'silver', label: 'Silver' },
+  { value: 'platinum', label: 'Platinum' },
+  { value: 'other', label: 'Other' },
+];
+
+export const PURITIES_BY_METAL = {
+  gold: ['24K', '22K', '18K', '14K'],
+  silver: ['999', '925'],
+  platinum: ['950', '900'],
+  other: [],
+};
+
+export const GEMSTONE_TYPES = [
+  { value: 'none', label: 'None' },
+  { value: 'diamond', label: 'Diamond' },
+  { value: 'ruby', label: 'Ruby' },
+  { value: 'emerald', label: 'Emerald' },
+  { value: 'sapphire', label: 'Sapphire' },
+  { value: 'pearl', label: 'Pearl' },
+  { value: 'other', label: 'Other' },
+];
+
 // Tags / search keywords are edited as a single comma-separated string in the
 // form for simplicity, then split into arrays right before hitting the API.
 export const splitCommaList = (value) =>
@@ -70,6 +98,9 @@ export const productSchema = z.object({
   searchKeywordsInput: z.string().optional(),
   gender: z.string().default(NO_RELATION_VALUE),
   occasion: z.array(z.string()).default([]),
+  metal: z.string().default(NO_RELATION_VALUE),
+  purity: z.string().default(''),
+  gemstoneType: z.string().default('none'),
   seo: z.object({
     metaTitle: z.string().optional(),
     metaDescription: z.string().optional(),
@@ -97,5 +128,8 @@ export const productFormDefaults = {
   searchKeywordsInput: '',
   gender: NO_RELATION_VALUE,
   occasion: [],
+  metal: NO_RELATION_VALUE,
+  purity: '',
+  gemstoneType: 'none',
   seo: { metaTitle: '', metaDescription: '', metaKeywords: '', canonicalUrl: '', ogImageMedia: null },
 };

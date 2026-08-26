@@ -57,6 +57,7 @@ export const serializeOrder = (order) => {
     discount: plain.discount,
     couponCode: plain.couponCode ?? null,
     couponDiscount: plain.couponDiscount,
+    promotionSnapshot: plain.promotionSnapshot ?? null,
     tax: plain.tax,
     shippingCharge: plain.shippingCharge,
     handlingCharge: plain.handlingCharge,

@@ -24,11 +24,11 @@ export function BackButton({ fallbackPath = '/', label = 'Back', className }) {
       onClick={handleClick}
       aria-label={label}
       className={cn(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-full py-1.5 pr-3 pl-2 text-sm font-medium text-foreground ring-1 ring-border transition-colors hover:bg-muted hover:text-primary cursor-pointer',
+        'inline-flex shrink-0 items-center gap-1.5 rounded-full bg-secondary/50 py-1.5 pr-3 pl-2.5 text-sm font-medium text-muted-foreground ring-1 ring-border/50 transition-all duration-300 hover:bg-secondary hover:text-foreground hover:shadow-sm cursor-pointer',
         className
       )}
     >
-      <ArrowLeft className="size-4" />
+      <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
       <span>{label}</span>
     </button>
   );

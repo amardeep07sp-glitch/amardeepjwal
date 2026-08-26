@@ -15,7 +15,7 @@ export function ResponsiveGrid({ count, className, children }) {
       className={cn(
         'grid',
         count === 1
-          ? 'max-w-60 grid-cols-1'
+          ? 'max-w-52 grid-cols-1 mx-auto sm:mx-0'
           : count === 2
             ? 'max-w-md grid-cols-2'
             : 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-4',

@@ -2,6 +2,8 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { couponService } from './coupon.service.js';
 import { serializeCoupon, serializeCouponList } from './coupon.serializer.js';
+import { couponRedemptionRepository } from './couponRedemption.repository.js';
+import { serializeRedemptionList } from './couponRedemption.serializer.js';
 
 export const listCoupons = asyncHandler(async (req, res) => {
   const { items, meta } = await couponService.listCoupons(req.query);
@@ -26,4 +28,16 @@ export const updateCoupon = asyncHandler(async (req, res) => {
 export const deleteCoupon = asyncHandler(async (req, res) => {
   await couponService.deleteCoupon(req.params.id);
   res.status(200).json(new ApiResponse(200, null, 'Coupon deleted successfully'));
+});
+
+export const listRedemptions = asyncHandler(async (req, res) => {
+  const { page, limit, ...filters } = req.query;
+  const { items, total } = await couponRedemptionRepository.findPaginated({ page, limit, ...filters });
+  const meta = { page, limit, totalItems: total, totalPages: Math.max(1, Math.ceil(total / limit)) };
+  res.status(200).json(new ApiResponse(200, { items: serializeRedemptionList(items), meta }, 'Redemptions fetched successfully'));
+});
+
+export const getCouponAnalytics = asyncHandler(async (req, res) => {
+  const summary = await couponRedemptionRepository.getSummaryByCoupon(req.params.id);
+  res.status(200).json(new ApiResponse(200, summary, 'Coupon analytics fetched successfully'));
 });

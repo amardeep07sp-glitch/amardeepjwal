@@ -7,6 +7,11 @@ export const listNavbarItems = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, items, 'Navbar items fetched successfully'));
 });
 
+export const listPublicNavbarItems = asyncHandler(async (req, res) => {
+  const items = await navbarService.listPublicItems();
+  res.status(200).json(new ApiResponse(200, items, 'Navbar items fetched successfully'));
+});
+
 export const createNavbarItem = asyncHandler(async (req, res) => {
   const item = await navbarService.createItem(req.body);
   res.status(201).json(new ApiResponse(201, item, 'Navbar item created successfully'));

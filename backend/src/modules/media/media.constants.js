@@ -13,6 +13,8 @@ export const MEDIA_ENTITY_TYPES = Object.freeze({
   SETTINGS: 'settings',
   CUSTOMER: 'customer',
   SUPPLIER: 'supplier',
+  SUPPORT_TICKET: 'support_ticket',
+  ISSUE_REPORT: 'issue_report',
 });
 
 export const MEDIA_TYPES = Object.freeze({

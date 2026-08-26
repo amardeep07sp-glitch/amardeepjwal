@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -17,10 +18,23 @@ import {
   Eye,
   ChevronRight,
   Clock,
+  ListFilter,
+  FilePlus2,
+  Pencil,
+  Trash2,
+  RefreshCw,
+  UserCheck,
+  Star,
+  User,
+  LifeBuoy,
+  HelpCircle,
+  CalendarDays,
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/global/EmptyState';
 import { useAuthStore } from '@/store/authStore';
 import { api } from '@/lib/api';
@@ -94,42 +108,170 @@ function formatActivityLine(entry) {
   return { action, who };
 }
 
+// Real module values this app's own activityLogService.record() calls use
+// (grepped across backend/src/modules) - never a guessed/invented list.
+const MODULE_OPTIONS = [
+  'accounting',
+  'Banner',
+  'Brand',
+  'Category',
+  'Collection',
+  'customer',
+  'Homepage',
+  'help',
+  'issue',
+  'order',
+  'Product',
+  'review',
+  'Settings',
+  'support',
+  'supplier',
+  'Variant',
+];
+
+// Module wins over action when both could apply (e.g. a 'review' module
+// entry always gets the star, regardless of its action verb) - falls back
+// to the action verb, then a generic activity pulse.
+const MODULE_ICON = {
+  customer: User,
+  review: Star,
+  order: ShoppingCart,
+  Product: Gem,
+  support: LifeBuoy,
+  issue: LifeBuoy,
+  help: HelpCircle,
+  supplier: Truck,
+  accounting: Landmark,
+};
+
+function activityIcon(entry) {
+  if (MODULE_ICON[entry.module]) return MODULE_ICON[entry.module];
+  const action = entry.action ?? '';
+  if (action.includes('created')) return FilePlus2;
+  if (action.includes('deleted')) return Trash2;
+  if (action.includes('assigned')) return UserCheck;
+  if (action.includes('status') || action.includes('changed')) return RefreshCw;
+  if (action.includes('updated')) return Pencil;
+  return Activity;
+}
+
+const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
+const startOfWeek = (d) => {
+  const day = d.getDay();
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - ((day + 6) % 7));
+  return startOfDay(monday);
+};
+
 function RecentActivityCard({ enabled }) {
+  const [moduleFilter, setModuleFilter] = useState(undefined);
+
   const { data, isLoading } = useQuery({
-    queryKey: ['dashboard-recent-activity'],
-    queryFn: async () => (await api.get('/activity-logs', { params: { page: 1, limit: 8 } })).data,
+    queryKey: ['dashboard-recent-activity', moduleFilter],
+    queryFn: async () => (await api.get('/activity-logs', { params: { page: 1, limit: 8, module: moduleFilter } })).data,
+    enabled,
+  });
+
+  // Real counts, not derived from the 8-row page above (which would
+  // undercount once a store has more than 8 activities in a day) - two
+  // cheap limit:1 requests just to read their real `meta.totalItems`.
+  const { data: todayData } = useQuery({
+    queryKey: ['dashboard-activity-count', 'today'],
+    queryFn: async () => (await api.get('/activity-logs', { params: { page: 1, limit: 1, dateFrom: startOfDay(new Date()) } })).data,
+    enabled,
+  });
+  const { data: weekData } = useQuery({
+    queryKey: ['dashboard-activity-count', 'week'],
+    queryFn: async () => (await api.get('/activity-logs', { params: { page: 1, limit: 1, dateFrom: startOfWeek(new Date()) } })).data,
     enabled,
   });
 
   if (!enabled) return null;
 
+  const items = data?.items ?? [];
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Clock className="size-4" /> Recent Activity</CardTitle>
+    <Card className="lg:col-span-2">
+      <CardHeader className="flex! flex-row items-center justify-between border-b border-border pb-(--card-spacing)">
+        <div className="flex items-center gap-3">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Clock className="size-5" />
+          </span>
+          <div>
+            <CardTitle className="text-lg">Recent Activity</CardTitle>
+            <p className="text-xs text-muted-foreground">Stay updated with the latest actions in your store</p>
+          </div>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <ListFilter className="size-3.5" /> {moduleFilter ?? 'Filter'}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
+            <DropdownMenuItem onSelect={() => setModuleFilter(undefined)}>All Activity</DropdownMenuItem>
+            {MODULE_OPTIONS.map((m) => (
+              <DropdownMenuItem key={m} onSelect={() => setModuleFilter(m)}>
+                {m}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-(--card-spacing)">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
-        ) : !data?.items || data.items.length === 0 ? (
+        ) : items.length === 0 ? (
           <EmptyState title="No activity yet" description="Actions across every module will show up here." />
         ) : (
-          <ul className="flex flex-col gap-3">
-            {data.items.map((entry) => {
+          <ul className="flex flex-col">
+            {items.map((entry, index) => {
               const { action, who } = formatActivityLine(entry);
+              const Icon = activityIcon(entry);
+              const isLast = index === items.length - 1;
               return (
-                <li key={entry.id} className="flex items-start justify-between gap-3 text-sm">
-                  <div className="flex flex-col">
-                    <span className="capitalize text-heading">{action}{entry.entityName ? ` · ${entry.entityName}` : ''}</span>
-                    <span className="text-xs text-muted-foreground">{who} · <Badge variant="outline" className="align-middle text-[10px]">{entry.module}</Badge></span>
+                <li key={entry.id} className="relative flex gap-4 pb-6 last:pb-0">
+                  {!isLast && <span className="absolute top-12 bottom-0 left-6 border-l-2 border-dashed border-border" />}
+                  <span className="relative z-10 flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary ring-4 ring-card">
+                    <Icon className="size-5" />
+                  </span>
+                  <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-heading capitalize">
+                        {action}
+                        {entry.entityName ? ` · ${entry.entityName}` : ''}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">{who}</p>
+                      <Badge variant="secondary" className="mt-1 gap-1 text-[10px] capitalize">
+                        <User className="size-2.5" /> {entry.module}
+                      </Badge>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5 text-xs whitespace-nowrap text-muted-foreground">
+                      <Clock className="size-3" /> {new Date(entry.createdAt).toLocaleString()}
+                    </div>
                   </div>
-                  <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">{new Date(entry.createdAt).toLocaleString()}</span>
                 </li>
               );
             })}
           </ul>
         )}
       </CardContent>
+
+      <div className="grid grid-cols-3 divide-x divide-border border-t border-border">
+        {[
+          { label: 'Total Activities', value: data?.meta?.totalItems, icon: Activity },
+          { label: 'Today', value: todayData?.meta?.totalItems, icon: CalendarDays },
+          { label: 'This Week', value: weekData?.meta?.totalItems, icon: Clock },
+        ].map((stat) => (
+          <div key={stat.label} className="flex items-center gap-2 px-4 py-3">
+            <stat.icon className="size-4 text-primary" />
+            <div>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <p className="text-base font-semibold text-heading">{stat.value ?? 0}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </Card>
   );
 }

@@ -43,6 +43,11 @@ export const login = asyncHandler(async (req, res) => {
   sendAuthResponse(req, res, 200, result, 'Logged in successfully');
 });
 
+export const googleLogin = asyncHandler(async (req, res) => {
+  const result = await authService.loginWithGoogle(req.body.idToken);
+  sendAuthResponse(req, res, 200, result, 'Logged in with Google successfully');
+});
+
 export const refreshToken = asyncHandler(async (req, res) => {
   const oldRefreshToken = req.cookies?.[resolveCookieName(req)];
   const result = await authService.refresh(oldRefreshToken);
@@ -55,6 +60,23 @@ export const logout = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, null, 'Logged out successfully'));
 });
 
+export const forgotPassword = asyncHandler(async (req, res) => {
+  await authService.requestPasswordReset(req.body.email);
+  // Same response whether or not the email is real - see
+  // auth.service.js#requestPasswordReset's own comment.
+  res.status(200).json(new ApiResponse(200, null, 'If an account exists for that email, a reset link has been sent.'));
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  await authService.resetPassword(req.body);
+  res.status(200).json(new ApiResponse(200, null, 'Password reset successfully - please log in with your new password.'));
+});
+
 export const getMe = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, authService.sanitizeUser(req.user), 'Current user fetched'));
+});
+
+export const listStaffUsers = asyncHandler(async (req, res) => {
+  const { items, total } = await authService.listStaffUsers(req.query);
+  res.status(200).json(new ApiResponse(200, { items, meta: { page: req.query.page, limit: req.query.limit, totalItems: total } }, 'Staff users fetched successfully'));
 });

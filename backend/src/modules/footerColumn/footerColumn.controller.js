@@ -7,6 +7,11 @@ export const listFooterColumns = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, columns, 'Footer columns fetched successfully'));
 });
 
+export const listPublicFooterColumns = asyncHandler(async (req, res) => {
+  const columns = await footerColumnService.listPublicColumns();
+  res.status(200).json(new ApiResponse(200, columns, 'Footer columns fetched successfully'));
+});
+
 export const createFooterColumn = asyncHandler(async (req, res) => {
   const column = await footerColumnService.createColumn(req.body);
   res.status(201).json(new ApiResponse(201, column, 'Footer column created successfully'));

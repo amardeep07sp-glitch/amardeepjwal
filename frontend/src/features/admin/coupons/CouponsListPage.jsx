@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -10,14 +10,23 @@ import { ConfirmDialog } from '@/components/global/ConfirmDialog';
 import { DEFAULT_PAGE_SIZE } from '@/config/appConfig';
 import { useCoupons, useDeleteCoupon } from './couponsApi';
 import { CouponFormModal } from './CouponFormModal';
-import { STATUS_BADGE_VARIANTS } from './couponSchema';
+import { CouponAnalyticsDrawer } from './CouponAnalyticsDrawer';
+import { COUPON_MANUAL_STATUSES, COUPON_EFFECTIVE_STATUS_VARIANTS, COUPON_DISCOUNT_TYPES } from './couponSchema';
 
 const STATUS_FILTER_ALL = 'all';
 
-const formatDiscount = (coupon) =>
-  coupon.discountType === 'percentage'
-    ? `${coupon.discountValue}%${coupon.maxDiscountAmount ? ` (up to ₹${coupon.maxDiscountAmount})` : ''}`
-    : `₹${coupon.discountValue}`;
+const formatDiscount = (coupon) => {
+  if (coupon.discountType === 'percentage') {
+    return `${coupon.discountValue}%${coupon.maxDiscountAmount ? ` (up to ₹${coupon.maxDiscountAmount})` : ''}`;
+  }
+  if (coupon.discountType === 'fixed_amount') return `₹${coupon.discountValue}`;
+  if (coupon.discountType === 'free_shipping') return 'Free shipping';
+  if (coupon.discountType === 'buy_x_get_y') {
+    const { buyQuantity, getQuantity, getDiscountPercentage } = coupon.buyXGetY ?? {};
+    return `Buy ${buyQuantity} Get ${getQuantity}${getDiscountPercentage < 100 ? ` @ ${getDiscountPercentage}%` : ''}`;
+  }
+  return COUPON_DISCOUNT_TYPES.find((t) => t.value === coupon.discountType)?.label ?? coupon.discountType;
+};
 
 const formatDate = (value) => new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -27,12 +36,13 @@ export default function CouponsListPage() {
   const [page, setPage] = useState(1);
   const [formModalState, setFormModalState] = useState({ open: false, coupon: null });
   const [couponToDelete, setCouponToDelete] = useState(null);
+  const [analyticsCoupon, setAnalyticsCoupon] = useState(null);
 
   const { data, isLoading, error, refetch } = useCoupons({
     page,
     limit: DEFAULT_PAGE_SIZE,
     search: searchTerm || undefined,
-    isActive: statusFilter === STATUS_FILTER_ALL ? undefined : statusFilter === 'active',
+    status: statusFilter === STATUS_FILTER_ALL ? undefined : statusFilter,
   });
   const deleteCoupon = useDeleteCoupon();
 
@@ -65,7 +75,7 @@ export default function CouponsListPage() {
     {
       key: 'usage',
       header: 'Usage',
-      render: (c) => `${c.redemptionCount}${c.usageLimit ? ` / ${c.usageLimit}` : ''}`,
+      render: (c) => `${c.usageCount}${c.usageLimit ? ` / ${c.usageLimit}` : ''}`,
     },
     {
       key: 'validity',
@@ -79,23 +89,21 @@ export default function CouponsListPage() {
     {
       key: 'status',
       header: 'Status',
-      render: (c) => {
-        const now = new Date();
-        const expired = new Date(c.validUntil) < now;
-        const status = !c.isActive ? 'inactive' : expired ? 'inactive' : 'active';
-        return (
-          <Badge variant={STATUS_BADGE_VARIANTS[status]} className="capitalize">
-            {expired && c.isActive ? 'Expired' : status}
-          </Badge>
-        );
-      },
+      render: (c) => (
+        <Badge variant={COUPON_EFFECTIVE_STATUS_VARIANTS[c.effectiveStatus] ?? 'secondary'} className="capitalize">
+          {c.effectiveStatus}
+        </Badge>
+      ),
     },
     {
       key: 'actions',
       header: '',
-      headerClassName: 'w-24',
+      headerClassName: 'w-32',
       render: (coupon) => (
         <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon-sm" aria-label={`Analytics for ${coupon.code}`} onClick={() => setAnalyticsCoupon(coupon)}>
+            <BarChart3 className="size-4" />
+          </Button>
           <Button variant="ghost" size="icon-sm" aria-label={`Edit ${coupon.code}`} onClick={() => setFormModalState({ open: true, coupon })}>
             <Pencil className="size-4" />
           </Button>
@@ -141,13 +149,16 @@ export default function CouponsListPage() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={STATUS_FILTER_ALL}>All statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
+              {COUPON_MANUAL_STATUSES.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         }
@@ -167,6 +178,8 @@ export default function CouponsListPage() {
         onOpenChange={(open) => setFormModalState({ open, coupon: open ? formModalState.coupon : null })}
         coupon={formModalState.coupon}
       />
+
+      <CouponAnalyticsDrawer open={Boolean(analyticsCoupon)} onOpenChange={(open) => !open && setAnalyticsCoupon(null)} coupon={analyticsCoupon} />
 
       <ConfirmDialog
         open={Boolean(couponToDelete)}

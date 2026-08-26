@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Users, Activity, Search, Repeat, Percent } from 'lucide-react';
+import { Users, Activity, Search, Repeat, Percent, TrendingDown, Clock } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageLoader } from '@/components/global/Loading';
@@ -99,12 +99,17 @@ export default function CipDashboardPage() {
         <p className="text-sm text-muted-foreground">Realtime visitors, search activity, and the conversion funnel - read-only.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Realtime Visitors" value={cards?.realtimeVisitors} icon={Users} tone="success" />
         <StatCard label="Active Sessions" value={cards?.activeSessions} icon={Activity} tone="success" />
         <StatCard label="Today's Searches" value={cards?.todaysSearches} icon={Search} />
         <StatCard label="Returning Customers" value={cards?.returningCustomers} icon={Repeat} />
         <StatCard label="Conversion Rate" value={cards?.conversionRate} icon={Percent} tone="warning" suffix="%" />
+        {/* Bounce rate/avg session - today's closed sessions only, same
+            "today" scope as Today's Searches (executiveCipDashboard.
+            service.js#getDashboardCards). */}
+        <StatCard label="Bounce Rate (Today)" value={cards?.bounceRate} icon={TrendingDown} tone="warning" suffix="%" />
+        <StatCard label="Avg. Time on Site (Today)" value={cards?.avgSessionMinutes} icon={Clock} suffix=" min" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

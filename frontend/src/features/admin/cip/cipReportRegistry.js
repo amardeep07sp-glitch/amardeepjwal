@@ -8,6 +8,7 @@
 
 export const OVERVIEW_REPORTS = [
   { key: 'visitor-report', label: 'Visitor Report', endpoint: '/cip/reports/visitors', shape: 'object', dateRange: true },
+  { key: 'engagement-report', label: 'Engagement (Bounce Rate & Time on Site)', endpoint: '/cip/reports/engagement', shape: 'object', dateRange: true },
   { key: 'device-report', label: 'Device Report', endpoint: '/cip/reports/devices', shape: 'object', dateRange: true },
   { key: 'location-report', label: 'Location Report', endpoint: '/cip/reports/locations', shape: 'object', dateRange: true },
   {

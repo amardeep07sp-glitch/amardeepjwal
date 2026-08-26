@@ -7,13 +7,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FormField } from '@/components/global/FormField';
 import { PageLoader } from '@/components/global/Loading';
 import { ErrorState } from '@/components/global/ErrorState';
 import { MediaPicker } from '../../media/MediaPicker';
 import { toMediaIdForSubmit } from '../../media/mediaSchema';
 import { useSettings, useUpdateSettings } from './settingsApi';
-import { settingsSchema, settingsFormDefaults } from './settingsSchema';
+import { settingsSchema, settingsFormDefaults, HEADING_FONT_OPTIONS, BODY_FONT_OPTIONS } from './settingsSchema';
+
+// Preview-only lookup (real CSS font-family strings) - the form itself
+// only ever stores/submits the short key (e.g. 'cormorant-garamond'), the
+// same contract backend/src/constants/typography.js and client/src/config/
+// typography.js both share. Admin's own UI never uses these fonts outside
+// this one preview box (see index.css's header comment on the imports).
+const FONT_FAMILY_CSS = {
+  'playfair-display': "'Playfair Display', serif",
+  'cormorant-garamond': "'Cormorant Garamond', serif",
+  inter: "'Inter Variable', sans-serif",
+  poppins: "'Poppins', sans-serif",
+};
 
 export default function SettingsPage() {
   const { data: settings, isLoading, error, refetch } = useSettings();
@@ -24,8 +37,12 @@ export default function SettingsPage() {
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(settingsSchema), defaultValues: settingsFormDefaults });
+
+  const previewHeadingFont = watch('typography.headingFont');
+  const previewBodyFont = watch('typography.bodyFont');
 
   useEffect(() => {
     if (settings) {
@@ -97,6 +114,65 @@ export default function SettingsPage() {
           <FormField label="Currency" htmlFor="currency">
             <Input id="currency" {...register('currency')} />
           </FormField>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Typography</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
+            Changes the storefront's fonts everywhere - hero headings, section titles and product names use the heading
+            font; body copy, buttons and prices use the body font. Both are curated, already-bundled fonts (no live
+            Google Fonts lookup), so there's no broken-typography risk from a bad value.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField label="Heading font" htmlFor="typography.headingFont">
+              <Controller
+                name="typography.headingFont"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="typography.headingFont" className="w-full"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {HEADING_FONT_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FormField>
+            <FormField label="Body font" htmlFor="typography.bodyFont">
+              <Controller
+                name="typography.bodyFont"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="typography.bodyFont" className="w-full"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {BODY_FONT_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FormField>
+          </div>
+
+          <div className="rounded-lg border border-border bg-secondary/30 p-5">
+            <p
+              className="text-2xl font-bold text-heading"
+              style={{ fontFamily: FONT_FAMILY_CSS[previewHeadingFont] }}
+            >
+              Timeless Gold Jewellery
+            </p>
+            <p className="mt-1.5 text-sm text-muted-foreground" style={{ fontFamily: FONT_FAMILY_CSS[previewBodyFont] }}>
+              This is how body copy, product descriptions and prices will read on the storefront.
+            </p>
+          </div>
         </CardContent>
       </Card>
 

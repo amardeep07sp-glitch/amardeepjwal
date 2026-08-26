@@ -8,6 +8,11 @@ export const listPages = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, serializePageList(pages), 'Pages fetched successfully'));
 });
 
+export const getPublicPage = asyncHandler(async (req, res) => {
+  const page = await pageService.getPublishedBySlug(req.params.slug);
+  res.status(200).json(new ApiResponse(200, serializePage(page), 'Page fetched successfully'));
+});
+
 export const createPage = asyncHandler(async (req, res) => {
   const page = await pageService.createPage(req.body);
   res.status(201).json(new ApiResponse(201, serializePage(page), 'Page created successfully'));

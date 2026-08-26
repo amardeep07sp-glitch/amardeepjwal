@@ -26,6 +26,11 @@ const ENTITY_FOLDER_MAP = Object.freeze({
   // Supplier documents (Phase 9) - GST certificate, PAN, bank proof, rate
   // contracts - same private-folder treatment as customer KYC documents.
   [MEDIA_ENTITY_TYPES.SUPPLIER]: 'suppliers',
+  // Customer-submitted evidence (damaged-item photos, screenshots) for
+  // support tickets and issue reports - same private-folder treatment as
+  // customer/supplier documents above.
+  [MEDIA_ENTITY_TYPES.SUPPORT_TICKET]: 'support',
+  [MEDIA_ENTITY_TYPES.ISSUE_REPORT]: 'support',
 });
 
 export function resolveMediaFolder(entityType) {

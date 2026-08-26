@@ -22,14 +22,21 @@ async function request(path, { method = 'GET', body, params, skipAuth = false, r
   const accessToken = useAuthStore.getState().accessToken;
   const url = buildUrl(path, params);
 
+  // FormData (file-attachment uploads - issue reports, support tickets)
+  // must NOT be JSON.stringify'd (that silently serializes it to "{}",
+  // dropping every field) and must NOT get an explicit Content-Type - the
+  // browser sets `multipart/form-data; boundary=...` itself only when the
+  // header is left unset.
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+
   const res = await fetch(`${BASE_URL}${url}`, {
     method,
     credentials: 'include',
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(!skipAuth && accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     },
-    body: body ? JSON.stringify(body) : undefined,
+    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
   });
 
   const isJson = res.headers.get('content-type')?.includes('application/json');

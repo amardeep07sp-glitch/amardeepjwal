@@ -16,6 +16,7 @@ const mockRazorpayService = {
   verifyPaymentSignature: jest.fn(),
 };
 const mockAccountingEvents = { recordSalePayment: jest.fn() };
+const mockSupportAutomation = { onPaymentFailed: jest.fn() };
 const mockSession = {
   startTransaction: jest.fn(),
   commitTransaction: jest.fn(),
@@ -31,6 +32,11 @@ jest.unstable_mockModule('../src/modules/order/razorpay.service.js', () => ({ ra
 // Mocked to avoid loading account.model.js for real - it calls
 // `new mongoose.Schema(...)` at module-load time, and mongoose is mocked below.
 jest.unstable_mockModule('../src/modules/accounting/accountingEvents.service.js', () => ({ accountingEvents: mockAccountingEvents }));
+// Mocked for the same reason as accountingEvents.service.js above -
+// supportAutomation.service.js transitively loads issueReport.model.js/
+// orderRefund.model.js/orderShipment.model.js, each calling `new
+// mongoose.Schema(...)` at module-load time.
+jest.unstable_mockModule('../src/modules/support/supportAutomation.service.js', () => ({ supportAutomation: mockSupportAutomation }));
 jest.unstable_mockModule('mongoose', () => ({
   default: { startSession: jest.fn(() => Promise.resolve(mockSession)) },
 }));
@@ -38,7 +44,7 @@ jest.unstable_mockModule('mongoose', () => ({
 const { orderPaymentService } = await import('../src/modules/order/orderPayment.service.js');
 
 beforeEach(() => {
-  [mockOrderRepo, mockOrderPaymentRepo, mockOrderAudit, mockOrderNotifications, mockRazorpayService, mockAccountingEvents, mockSession].forEach(
+  [mockOrderRepo, mockOrderPaymentRepo, mockOrderAudit, mockOrderNotifications, mockRazorpayService, mockAccountingEvents, mockSupportAutomation, mockSession].forEach(
     (mockObj) => Object.values(mockObj).forEach((fn) => fn.mockReset?.())
   );
 });
@@ -103,6 +109,36 @@ describe('orderPaymentService.verifyRazorpayPayment', () => {
     ).rejects.toThrow('signature verification failed');
 
     expect(mockOrderPaymentRepo.findByGatewayPaymentId).not.toHaveBeenCalled();
+  });
+});
+
+describe('orderPaymentService.handleWebhookEvent - payment.failed automation', () => {
+  it('marks a pending payment failed and flags an automated issue report', async () => {
+    const payment = { _id: 'pay1', order: 'o1', status: 'pending', save: jest.fn() };
+    mockOrderPaymentRepo.findByGatewayOrderId.mockResolvedValue(payment);
+    mockOrderRepo.findRawById.mockResolvedValue({ _id: 'o1', customer: 'cust1', orderNumber: 'ORD-1' });
+
+    await orderPaymentService.handleWebhookEvent({
+      event: 'payment.failed',
+      payload: { payment: { entity: { order_id: 'razorpay_order_1', id: 'razorpay_pay_1' } } },
+    });
+
+    expect(payment.status).toBe('failed');
+    expect(payment.save).toHaveBeenCalled();
+    expect(mockSupportAutomation.onPaymentFailed).toHaveBeenCalledWith({ orderId: 'o1', customerId: 'cust1', orderNumber: 'ORD-1' });
+  });
+
+  it('is a no-op when the payment is already resolved (not pending)', async () => {
+    const payment = { _id: 'pay1', order: 'o1', status: 'paid', save: jest.fn() };
+    mockOrderPaymentRepo.findByGatewayOrderId.mockResolvedValue(payment);
+
+    await orderPaymentService.handleWebhookEvent({
+      event: 'payment.failed',
+      payload: { payment: { entity: { order_id: 'razorpay_order_1', id: 'razorpay_pay_1' } } },
+    });
+
+    expect(payment.save).not.toHaveBeenCalled();
+    expect(mockSupportAutomation.onPaymentFailed).not.toHaveBeenCalled();
   });
 });
 

@@ -17,4 +17,12 @@ export const customerPreferenceRepository = {
       { new: true, upsert: true, setDefaultsOnInsert: true }
     ).populate(POPULATE_FIELDS);
   },
+
+  // Broadcast's own bulk-read (broadcast.service.js#processBroadcast) - one
+  // query for every customer's opt-in flags rather than a per-customer
+  // lookup. A customer with no CustomerPreference doc yet is treated as
+  // opted-in-by-default by the caller, matching the schema's own defaults.
+  findAllCommunicationPrefs() {
+    return CustomerPreference.find({}).select('customer communicationPreference').lean();
+  },
 };

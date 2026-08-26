@@ -1,0 +1,1 @@
+export { MetalRateStrip } from './MetalRateStrip';

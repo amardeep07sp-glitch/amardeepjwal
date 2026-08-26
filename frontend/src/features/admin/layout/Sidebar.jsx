@@ -9,8 +9,18 @@ export function Sidebar({ onNavigate }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-14 shrink-0 items-center border-b border-border px-4">
-        <span className="truncate text-sm font-semibold text-heading">{APP_NAME}</span>
+      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-border/60 px-4">
+        <div className="flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-primary/30 bg-[#2A080C] p-0.5 shadow-xs">
+          <img
+            src="/logo.jpg"
+            alt="Amardeep"
+            className="h-full w-auto rounded-[4px] object-contain"
+          />
+        </div>
+        <div className="flex min-w-0 flex-col leading-tight">
+          <span className="truncate text-xs font-bold text-heading">{APP_NAME}</span>
+          <span className="truncate text-[10px] font-medium tracking-wider text-muted-foreground uppercase">Admin Portal</span>
+        </div>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {ADMIN_NAV_ITEMS.map((item) => {
@@ -32,7 +42,7 @@ export function Sidebar({ onNavigate }) {
                   cn(
                     'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-primary text-primary-foreground'
+                      ? 'bg-primary text-primary-foreground shadow-sm font-semibold'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )
                 }

@@ -57,7 +57,7 @@ export function DataTable({
         </div>
       )}
 
-      <div className="rounded-lg border border-border">
+      <div className="rounded-card border border-border shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>

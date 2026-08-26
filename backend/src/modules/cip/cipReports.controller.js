@@ -14,6 +14,7 @@ import { cartAnalyticsService } from './cartAnalytics.service.js';
 import { wishlistAnalyticsService } from './wishlistAnalytics.service.js';
 import { marketingAnalyticsService } from './marketingAnalytics.service.js';
 import { notificationAnalyticsService } from './notificationAnalytics.service.js';
+import { loginLocationService } from './loginLocation.service.js';
 
 // Every named CIP report (Visitor/Device/Location/Session/Search/Product/
 // Category/Funnel/Journey/Cart/Wishlist/Marketing/Notification), each a
@@ -27,6 +28,11 @@ export const getVisitorReport = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, report, 'Visitor report fetched successfully'));
 });
 
+export const getEngagementSummary = asyncHandler(async (req, res) => {
+  const summary = await visitorAnalyticsService.getEngagementSummary(req.query);
+  res.status(200).json(new ApiResponse(200, summary, 'Engagement summary fetched successfully'));
+});
+
 export const getDeviceReport = asyncHandler(async (req, res) => {
   const report = await deviceAnalyticsService.getDeviceReport(req.query);
   res.status(200).json(new ApiResponse(200, report, 'Device report fetched successfully'));
@@ -35,6 +41,21 @@ export const getDeviceReport = asyncHandler(async (req, res) => {
 export const getLocationReport = asyncHandler(async (req, res) => {
   const report = await locationAnalyticsService.getLocationReport(req.query);
   res.status(200).json(new ApiResponse(200, report, 'Location report fetched successfully'));
+});
+
+export const getLoginLocationPoints = asyncHandler(async (req, res) => {
+  const points = await loginLocationService.getRecentPoints();
+  res.status(200).json(new ApiResponse(200, points, 'Login locations fetched successfully'));
+});
+
+export const getLoginLocationStates = asyncHandler(async (req, res) => {
+  const rows = await loginLocationService.getStateBreakdown();
+  res.status(200).json(new ApiResponse(200, rows, 'Login location state breakdown fetched successfully'));
+});
+
+export const getOrderLocationStates = asyncHandler(async (req, res) => {
+  const rows = await locationAnalyticsService.getOrderStateBreakdown(req.query);
+  res.status(200).json(new ApiResponse(200, rows, 'Order location state breakdown fetched successfully'));
 });
 
 export const getSourceBreakdown = asyncHandler(async (req, res) => {

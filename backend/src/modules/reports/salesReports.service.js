@@ -126,11 +126,17 @@ export const salesReportsService = {
     return rows.map((r) => ({ userId: r._id, name: r.user?.name ?? 'Unknown', orderCount: r.orderCount, revenue: r.revenue }));
   },
 
-  async getSalesByDate({ dateFrom, dateTo }) {
+  // `groupBy` buckets the same underlying orders differently - 'week' uses
+  // ISO 8601 week-year+week ($G/$V, MongoDB's own ISO week format, e.g.
+  // "2026-W15") so a week always means Mon-Sun and never splits across a
+  // Dec/Jan boundary the way a naive "days since epoch / 7" bucket would.
+  async getSalesByDate({ dateFrom, dateTo, groupBy = 'day' }) {
     const match = { orderStatus: { $in: SETTLED_STATUSES }, ...dateMatch(dateFrom, dateTo) };
+    const DATE_FORMATS = { day: '%Y-%m-%d', week: '%G-W%V', month: '%Y-%m' };
+    const format = DATE_FORMATS[groupBy] ?? DATE_FORMATS.day;
     return Order.aggregate([
       { $match: match },
-      { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, orderCount: { $sum: 1 }, revenue: { $sum: '$grandTotal' } } },
+      { $group: { _id: { $dateToString: { format, date: '$createdAt' } }, orderCount: { $sum: 1 }, revenue: { $sum: '$grandTotal' } } },
       { $sort: { _id: 1 } },
     ]);
   },

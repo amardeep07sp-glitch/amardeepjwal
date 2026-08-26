@@ -1,0 +1,230 @@
+API KEYS / SECRETS NEEDED BEFORE REAL LAUNCH
+==============================================
+Fill these in backend/.env (copy from backend/.env.example if you haven't
+already). Nothing in the app crashes if these are left blank - each
+feature just stays disabled/degraded until its key is added (see the
+"what happens if left blank" note on each one). Delete this file once
+everything below is filled in for real.
+
+
+1) RAZORPAY (online payment - UPI/Cards/Netbanking)
+-----------------------------------------------------
+  RAZORPAY_KEY_ID=
+  RAZORPAY_KEY_SECRET=
+  RAZORPAY_WEBHOOK_SECRET=
+
+  Where to get it: Razorpay Dashboard -> Settings -> API Keys (Key ID +
+  Secret). The Webhook Secret is set separately under Settings -> Webhooks
+  when you add a webhook URL pointing at:
+    https://<your-domain>/api/v1/storefront/payments/razorpay/webhook
+  (check the exact route in backend/src/modules/storefront/storefront.routes.js
+  if you rename anything).
+
+  Also needed on the CLIENT app (client/.env - create this file, it doesn't
+  exist yet):
+    VITE_RAZORPAY_KEY_ID=
+  (same value as RAZORPAY_KEY_ID above - this one is public/safe to expose,
+  it's the publishable key Razorpay Checkout.js uses in the browser).
+
+  Current status: Online payment is COMMENTED OUT in
+  client/src/pages/CheckoutPage.jsx (only Cash on Delivery is selectable
+  right now) specifically because these keys were empty. Once you've added
+  real keys:
+    1. Uncomment the "Pay Online" radio option and its handling block in
+       client/src/pages/CheckoutPage.jsx (both are clearly marked with a
+       comment explaining what to uncomment together).
+    2. Test a real payment end-to-end in Razorpay TEST mode first (test
+       keys look the same shape as live keys, Razorpay dashboard has a
+       test/live toggle) before switching to live keys.
+    3. Refunds: orderRefund.service.js already calls the real Razorpay
+       refund API automatically once these keys are set - no extra code
+       change needed there.
+
+
+1b) GOOGLE SIGN-IN (Continue with Google, on the customer /login page)
+-----------------------------------------------------
+  GOOGLE_CLIENT_ID=
+
+  Where to get it: https://console.cloud.google.com -> APIs & Services ->
+  Credentials -> Create Credentials -> OAuth client ID -> Application type
+  "Web application". Under "Authorized JavaScript origins" add your real
+  site origin(s) (e.g. https://www.yourstore.com, and
+  http://localhost:5180 for local dev). You do NOT need a client secret -
+  this uses Google's ID-token flow (the browser gets a signed token
+  straight from Google; the backend just verifies it), not a server-side
+  OAuth redirect.
+
+  Also needed on the CLIENT app (client/.env - same file as
+  VITE_RAZORPAY_KEY_ID above):
+    VITE_GOOGLE_CLIENT_ID=
+  (same value as GOOGLE_CLIENT_ID - this one is public/safe to expose, it's
+  what Google Identity Services uses in the browser to render the button).
+
+  Current status: the "Continue with Google" button on /login (both the
+  Create Account and Log In tabs) simply doesn't render at all until
+  VITE_GOOGLE_CLIENT_ID is set - no broken button, no error shown to
+  customers. The backend route (POST /auth/google) returns a clear 503
+  ("Google sign-in is not configured") if hit directly without
+  GOOGLE_CLIENT_ID set. Once both are added, it works immediately - no
+  code changes needed, this was built already-wired, not stubbed.
+
+
+2) RESEND (transactional email - order confirmation, shipping updates,
+   password reset)
+-----------------------------------------------------
+  RESEND_API_KEY=
+
+  Where to get it: https://resend.com -> API Keys. You'll also need to
+  verify a sending domain there (or use their test domain while testing).
+
+  Current status: notification.sender.js silently no-ops without this -
+  no crash, but customers get ZERO emails right now, including password
+  reset links (auth.service.js#requestPasswordReset). This is a real
+  launch blocker if you want password reset or order emails to work.
+
+  The "from" address is currently hardcoded in
+  backend/src/modules/shared/notification.sender.js as
+  notifications@amardeepswarnakalakendra.com - update that to match
+  whatever domain you verify in Resend.
+
+
+3) WHATSAPP BUSINESS API (order updates via WhatsApp)
+-----------------------------------------------------
+  WHATSAPP_TOKEN=
+  WHATSAPP_PHONE_ID=
+
+  Where to get it: Meta for Developers -> WhatsApp -> API Setup (needs a
+  Meta Business account + a verified WhatsApp Business phone number).
+
+  Current status: optional feature, silently disabled without these -
+  order notifications still work via email once RESEND_API_KEY is set,
+  this is just an additional channel.
+
+
+4) CLOUDINARY (product images/videos, review photos, everything uploaded
+   through Admin -> Media)
+-----------------------------------------------------
+  CLOUDINARY_CLOUD_NAME=
+  CLOUDINARY_API_KEY=
+  CLOUDINARY_API_SECRET=
+
+  Where to get it: https://cloudinary.com -> Dashboard (free tier is
+  usually enough to start).
+
+  Current status: without these, ANY image/video upload anywhere in the
+  admin panel will fail. This is required before you can even add real
+  product photos - treat this as priority #1 to fill in.
+
+
+5) MONGODB (database)
+-----------------------------------------------------
+  MONGO_URI=
+
+  Where to get it: MongoDB Atlas (https://mongodb.com/atlas) -> create a
+  free/paid cluster -> Connect -> "Connect your application" -> copy the
+  connection string, replace <user>/<password>/<cluster> with your real
+  values. Do NOT point production at a localhost MongoDB.
+
+
+6) REDIS (caching - geo-IP lookups, reverse-geocode cache)
+-----------------------------------------------------
+  REDIS_URL=
+
+  A managed Redis (Upstash, Redis Cloud free tier, etc.) works fine for
+  this app's usage. If left as the localhost default in production, geo
+  lookups will just fail to connect and fall back gracefully (never
+  crashes the app), but you lose the caching benefit.
+
+
+7) JWT SECRETS (session security) - REQUIRED, app won't start without them
+-----------------------------------------------------
+  JWT_ACCESS_SECRET=
+  JWT_REFRESH_SECRET=
+
+  These currently sit in .env.example as literal placeholder text
+  ("change_this_access_secret" / "change_this_refresh_secret"). The app
+  DOES start with weak values like that (it only checks they're non-empty,
+  not that they're strong) - but every login/session in production would
+  be signed with a guessable secret. Generate two real random strings
+  before going live, e.g.:
+    node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+  Run that twice, use one output for each secret. Keep them different from
+  each other.
+
+
+8) CORS_ORIGIN / SITE_URL (must point at your real domains)
+-----------------------------------------------------
+  CORS_ORIGIN=
+  SITE_URL=
+
+  CORS_ORIGIN: comma-separated list of every real frontend origin allowed
+  to call this API (e.g. https://www.yourstore.com,https://admin.yourstore.com).
+  Currently defaults to localhost:5173 - MUST be changed or the live
+  storefront/admin will get CORS errors calling the API.
+
+  SITE_URL: your real storefront domain (e.g. https://www.yourstore.com) -
+  used to build the password-reset email link and canonical URLs. Also
+  currently defaults to localhost.
+
+
+9) ONE-TIME: create the first Super Admin account
+-----------------------------------------------------
+  Not a .env value - run this once against your production database
+  (see backend/scripts/seedSuperAdmin.js for what it does):
+
+    SUPER_ADMIN_NAME="Your Name" \
+    SUPER_ADMIN_EMAIL="admin@yourdomain.com" \
+    SUPER_ADMIN_PHONE="9999999999" \
+    SUPER_ADMIN_PASSWORD="a-real-strong-password" \
+    npm run seed:admin
+
+  (from inside backend/). Safe to run more than once - it does nothing if
+  a Super Admin already exists.
+
+
+10) OPTIONAL, NOT YET ADDED (mentioned here so you don't forget):
+-----------------------------------------------------
+  - Error monitoring (e.g. Sentry) - not wired into the codebase at all
+    yet. If you want this, you'll need a Sentry DSN and a small amount of
+    integration code added to backend/src/server.js and both frontends.
+  - SMS/OTP provider (e.g. MSG91/Twilio) - not wired in. WhatsApp (#3
+    above) is currently the only "text message" channel.
+
+
+ALSO DONE FOR YOU IN THIS PASS (later, admin Broadcast feature):
+-----------------------------------------------------
+  - New "Broadcast" page in the admin panel (sidebar -> Customer
+    Intelligence -> Broadcast) lets you send one message to every customer
+    at once via Email + WhatsApp + an on-site announcement banner,
+    together, in one click.
+  - Email/WhatsApp delivery uses the exact same RESEND_API_KEY /
+    WHATSAPP_TOKEN+WHATSAPP_PHONE_ID as everything else (#2 and #3 above) -
+    until those are set, a broadcast will show "sent" with every
+    email/WhatsApp attempt marked failed (visible in the live stats on the
+    Broadcast page). The website banner channel needs no key - it works
+    today.
+  - Respects each customer's communication preferences (Account -> opted
+    out of email/WhatsApp customers are automatically skipped, counted
+    separately as "skipped" in the stats, never as "failed").
+  - No job queue exists in this backend - a broadcast processes in the
+    background on the same server process (chunked, ~25 customers at a
+    time). Safe at this project's current customer-list scale; if the
+    customer base grows into the tens of thousands, revisit with a real
+    queue (e.g. BullMQ) rather than relying on this in-process loop.
+
+
+ALSO DONE FOR YOU IN THIS PASS (no key needed, just flagging):
+-----------------------------------------------------
+  - Legal pages seeded for real: run `npm run seed:legal` (from backend/)
+    to create Privacy Policy / Terms & Conditions / Shipping Policy /
+    Return & Exchange Policy as real, editable CMS pages (Admin -> CMS ->
+    Pages). The wording is a genuine starting template, NOT reviewed by a
+    lawyer - read through each one and fill in the "[DATE - fill in]" /
+    "[CITY - fill in]" placeholders, and have a lawyer review before
+    relying on it.
+  - Password reset (forgot/reset password) is fully built - it just needs
+    RESEND_API_KEY (#2 above) to actually deliver the email.
+  - Cash on Delivery order-value limit exists (COD_MAX_ORDER_VALUE env
+    var, backend/src/config/env.js) but is left UNSET on purpose - it
+    would strand high-value orders with no payment method while Razorpay
+    is disabled. Set it once Razorpay (#1) is back online.

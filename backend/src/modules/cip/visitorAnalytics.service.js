@@ -1,5 +1,6 @@
 import { Event } from './event.model.js';
 import { visitorRepository } from './visitor.repository.js';
+import { sessionRepository } from './session.repository.js';
 import { sessionService } from './session.service.js';
 import { buildDateRangeMatch } from '../reports/reportFilters.util.js';
 
@@ -7,6 +8,14 @@ export const visitorAnalyticsService = {
   // "Realtime Visitors" / "Active Sessions" - Executive Dashboard cards.
   getActiveSessionCount() {
     return sessionService.getActiveSessionCount();
+  },
+
+  // "User behavior analytics" - the aggregate metrics the per-session
+  // Session Report table never surfaced on its own (an admin previously
+  // had to eyeball/average a paginated list of raw durationSeconds/
+  // isBounce values). bounceRate is a percentage (0-100, one decimal).
+  getEngagementSummary({ dateFrom, dateTo } = {}) {
+    return sessionRepository.getEngagementSummary({ dateFrom, dateTo });
   },
 
   async getVisitorReport({ dateFrom, dateTo } = {}) {

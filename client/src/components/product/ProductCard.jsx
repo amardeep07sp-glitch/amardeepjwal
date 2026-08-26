@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BadgePercent, Check, Gem, Heart, ShoppingBag } from 'lucide-react';
+import { BadgePercent, Check, Gem, Heart, ShoppingBag, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatPrice } from '@/lib/format';
 import { LOW_STOCK_THRESHOLD } from '@/config/appConfig';
@@ -26,7 +26,7 @@ export function ProductCard({ product, className }) {
   const { data: wishlist } = useMyWishlist({ enabled: Boolean(user) });
   const addToWishlist = useAddToWishlist();
   const removeFromWishlist = useRemoveFromWishlist();
-  const { id, slug, name, price, image, inStock, stockQuantity } = product;
+  const { id, slug, name, price, image, inStock, stockQuantity, rating } = product;
   const isLowStock = inStock && stockQuantity > 0 && stockQuantity <= LOW_STOCK_THRESHOLD;
   const isWishlisted = wishlist?.some((row) => row.product?.id === id) ?? false;
 
@@ -54,7 +54,7 @@ export function ProductCard({ product, className }) {
   return (
     <div
       className={cn(
-        'group/card flex flex-col overflow-hidden rounded-xl bg-card ring-1 ring-border transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_35px_-15px_rgba(200,162,74,0.35)] hover:ring-primary/25',
+        'group/card flex flex-col overflow-hidden rounded-xl bg-card border border-border/50 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-hover hover:border-primary/30',
         className
       )}
     >
@@ -65,7 +65,7 @@ export function ProductCard({ product, className }) {
               src={image.secureUrl}
               alt={image.altText || name}
               loading="lazy"
-              className="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.08]"
+              className="size-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.08]"
             />
           ) : (
             <div className="flex size-full items-center justify-center bg-linear-to-br from-primary/10 via-secondary to-secondary">
@@ -91,12 +91,12 @@ export function ProductCard({ product, className }) {
             separate block between image and info - matches a real mobile
             jewellery-storefront PLP card exactly. */}
         {!inStock ? (
-          <div className="absolute inset-x-0 bottom-0 bg-destructive py-1 text-center text-[10px] font-semibold tracking-wide text-white uppercase">
+          <div className="absolute bottom-2 left-2 right-2 rounded-md bg-destructive/90 backdrop-blur-sm py-1 text-center text-[10px] font-semibold tracking-wide text-white uppercase shadow-sm">
             Out of Stock
           </div>
         ) : (
           isLowStock && (
-            <div className="absolute inset-x-0 bottom-0 bg-warning py-1 text-center text-[10px] font-semibold tracking-wide text-white uppercase">
+            <div className="absolute bottom-2 left-2 right-2 rounded-md bg-warning/90 backdrop-blur-sm py-1 text-center text-[10px] font-semibold tracking-wide text-white uppercase shadow-sm">
               Only {stockQuantity} left!
             </div>
           )
@@ -118,9 +118,19 @@ export function ProductCard({ product, className }) {
           )}
         </div>
 
-        {/* Real discount %, never a fabricated claim - no reviews/sold-count
-            style invented numbers, and no borrowed "stone charges" wording
-            since this catalog doesn't model that as a separate charge. */}
+        {/* Real rating aggregate (review.service.js's recompute, approved
+            reviews only) - never shown for a product with zero real reviews. */}
+        {rating?.count > 0 && (
+          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Star className="size-3.5 shrink-0 fill-warning text-warning" />
+            <span className="font-medium text-heading">{rating.average.toFixed(1)}</span>
+            <span>({rating.count})</span>
+          </p>
+        )}
+
+        {/* Real discount %, never a fabricated claim - no sold-count style
+            invented numbers, and no borrowed "stone charges" wording since
+            this catalog doesn't model that as a separate charge. */}
         {price.discountPercentage > 0 && (
           <p className="flex items-center gap-1 text-xs font-medium text-primary">
             <BadgePercent className="size-3.5 shrink-0" />
@@ -129,8 +139,7 @@ export function ProductCard({ product, className }) {
         )}
 
         <Button
-          variant="outline"
-          className="mt-auto w-full gap-1.5 overflow-hidden text-xs uppercase"
+          className="mt-auto w-full gap-1.5 overflow-hidden text-xs uppercase bg-secondary/80 text-foreground hover:bg-gradient-luxury hover:text-white transition-all duration-300 border-0"
           disabled={!inStock}
           onClick={handleAddToCart}
         >

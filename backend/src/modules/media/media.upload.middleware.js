@@ -36,3 +36,22 @@ export const handleMediaUpload = (req, res, next) => {
     next();
   });
 };
+
+// Support tickets/issue reports let a customer attach several pieces of
+// evidence (damaged-item photos, screenshots) in one submit - same
+// storage/fileFilter/size ceiling as the single-file path above, just
+// `.array()` instead of `.single()`. Files are optional here (a ticket/
+// issue with zero attachments is valid), so this never 400s on an empty
+// upload the way handleMediaUpload does.
+const attachmentsUpload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: maxPossibleBytes },
+}).array('attachments', 5);
+
+export const handleAttachmentsUpload = (req, res, next) => {
+  attachmentsUpload(req, res, (err) => {
+    if (err) return next(new ApiError(400, err.message || 'File upload failed'));
+    next();
+  });
+};
