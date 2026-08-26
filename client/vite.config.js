@@ -2,11 +2,10 @@ import path from 'path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import locator from "vite-react-locator";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [locator(), react(), tailwindcss()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),

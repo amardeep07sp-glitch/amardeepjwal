@@ -6,7 +6,6 @@ import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/store/authStore';
 import './index.css';
 import App from './App.jsx';
-import "vite-react-locator/runtime";
 
 // Same shape as the admin panel's own Root wrapper (frontend/src/main.jsx)
 // - one silent session-restore attempt (via the real httpOnly refresh
