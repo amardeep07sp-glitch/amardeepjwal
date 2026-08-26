@@ -58,6 +58,7 @@ function PhoneStep({ phone, setPhone, onNext }) {
           icon={Phone}
           type="tel"
           inputMode="numeric"
+          autoComplete="tel-national"
           placeholder="Enter 10-digit mobile number"
           required
           autoFocus
@@ -104,6 +105,7 @@ function EmailStep({ email, setEmail, phone, onBack, onSent }) {
         <IconField
           icon={Mail}
           type="email"
+          autoComplete="email"
           placeholder="e.g. name@example.com"
           required
           autoFocus
@@ -163,6 +165,7 @@ function OtpStep({ email, otp, setOtp, onBack, onNext }) {
         <IconField
           icon={KeyRound}
           inputMode="numeric"
+          autoComplete="one-time-code"
           placeholder="••••••"
           required
           autoFocus
@@ -231,6 +234,7 @@ function DetailsStep({ email, otp, onBack, onSuccess }) {
         <label className="text-xs font-medium text-zinc-600">Full Name</label>
         <IconField
           icon={User}
+          autoComplete="name"
           placeholder="e.g. Priyanshu Sharma"
           required
           autoFocus
@@ -248,6 +252,7 @@ function DetailsStep({ email, otp, onBack, onSuccess }) {
           <PasswordInput
             className="pl-11 h-11 sm:h-12 rounded-xl bg-white border-zinc-200/80 focus:border-[#C8A24A] focus:ring-4 focus:ring-[#C8A24A]/15"
             placeholder="••••••••••••"
+            autoComplete="new-password"
             required
             minLength={8}
             value={password}
@@ -268,6 +273,7 @@ function DetailsStep({ email, otp, onBack, onSuccess }) {
               !passwordsMatch && 'border-red-500 ring-2 ring-red-500/20'
             )}
             placeholder="••••••••••••"
+            autoComplete="new-password"
             required
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -405,6 +411,7 @@ function SignInForm({ onSuccess }) {
         <label className="text-xs font-medium text-zinc-600">Email or Mobile Number</label>
         <IconField
           icon={Mail}
+          autoComplete="username"
           placeholder="name@example.com or 9876543210"
           required
           value={form.identifier}
@@ -430,6 +437,7 @@ function SignInForm({ onSuccess }) {
           <PasswordInput
             className="pl-11 h-11 sm:h-12 rounded-xl bg-white border-zinc-200/80 focus:border-[#C8A24A] focus:ring-4 focus:ring-[#C8A24A]/15"
             placeholder="••••••••••••"
+            autoComplete="current-password"
             required
             value={form.password}
             onChange={set('password')}

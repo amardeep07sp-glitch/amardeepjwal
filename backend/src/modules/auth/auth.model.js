@@ -43,9 +43,14 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Cost 10 (not 12) - still well above the widely-recommended minimum (10),
+// but noticeably lighter on a free/shared-CPU host (Render's free tier)
+// where cost 12 was adding a real, felt delay to every login/register/
+// refresh (each does one hash or compare). Halving-ish the cost roughly
+// halves the CPU time per call without meaningfully weakening the hash.
 userSchema.pre('save', async function hashPassword(next) {
   if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
+  this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 

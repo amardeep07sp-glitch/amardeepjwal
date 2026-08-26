@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { LifeBuoy, Paperclip, Send } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useMyTicket, useReplyToMyTicket } from '@/features/support/supportApi';
+import { compressImage } from '@/lib/compressImage';
 import { AccountLayout } from '@/components/account/AccountLayout';
 import { ErrorState } from '@/components/global/ErrorState';
 import { Spinner } from '@/components/global/Loading';
@@ -68,7 +69,8 @@ export default function SupportTicketDetailPage() {
     setReplyError('');
     const formData = new FormData();
     formData.append('content', content.trim());
-    files.forEach((file) => formData.append('attachments', file));
+    const compressedFiles = await Promise.all(files.map(compressImage));
+    compressedFiles.forEach((file) => formData.append('attachments', file));
 
     try {
       await replyToTicket.mutateAsync({ id, payload: formData });

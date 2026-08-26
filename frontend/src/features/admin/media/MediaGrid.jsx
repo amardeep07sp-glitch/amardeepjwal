@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { Archive, ArchiveRestore, Trash2, Image as ImageIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { compressImage } from '@/lib/compressImage';
 import { EmptyState } from '@/components/global/EmptyState';
 import { PageLoader } from '@/components/global/Loading';
 import { ErrorState } from '@/components/global/ErrorState';
@@ -70,7 +71,7 @@ export function MediaGrid({ entityType, entityId, variantId }) {
     if (!file || !replaceTargetId.current) return;
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', await compressImage(file));
 
     try {
       await replaceMedia.mutateAsync({ id: replaceTargetId.current, formData });

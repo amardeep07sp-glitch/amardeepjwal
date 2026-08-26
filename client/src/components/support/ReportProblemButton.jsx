@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateMyIssue } from '@/features/support/supportApi';
+import { compressImage } from '@/lib/compressImage';
 import { ISSUE_REASONS_BY_CATEGORY } from '@/features/support/issueReasons';
 
 // The reusable "Report a problem" entry point (Phase 51/53) - every call
@@ -54,7 +55,8 @@ export function ReportProblemButton({
     if (entityId) formData.append('entityId', entityId);
     formData.append('description', description.trim());
     formData.append('metadata', JSON.stringify(context));
-    files.forEach((file) => formData.append('attachments', file));
+    const compressedFiles = await Promise.all(files.map(compressImage));
+    compressedFiles.forEach((file) => formData.append('attachments', file));
 
     try {
       const result = await createIssue.mutateAsync(formData);

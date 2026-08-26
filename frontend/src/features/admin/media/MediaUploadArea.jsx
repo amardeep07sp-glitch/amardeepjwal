@@ -3,6 +3,7 @@ import { UploadCloud, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
+import { compressImage } from '@/lib/compressImage';
 import { useUploadMedia } from './mediaApi';
 
 const ACCEPTED_MIME_TYPES = [
@@ -28,14 +29,18 @@ export function MediaUploadArea({ entityType, entityId, variantId, disabled }) {
     }
 
     for (const file of files) {
+      // Video passes through untouched (compressImage no-ops on non-image
+      // types) - a whole product gallery of phone photos is the exact case
+      // this speeds up the most.
+      const uploadFile = await compressImage(file); // eslint-disable-line no-await-in-loop
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', uploadFile);
       formData.append('entityType', entityType);
       formData.append('entityId', entityId);
       if (variantId) formData.append('variantId', variantId);
 
       try {
-        await uploadMedia.mutateAsync(formData);
+        await uploadMedia.mutateAsync(formData); // eslint-disable-line no-await-in-loop
         toast.success(`Uploaded "${file.name}"`);
       } catch (err) {
         toast.error(`"${file.name}" failed: ${err.message}`);

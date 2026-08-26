@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Pagination } from '@/components/global/Pagination';
 import { ReportReviewButton } from './ReportReviewButton';
+import { compressImage } from '@/lib/compressImage';
 import { cn } from '@/lib/utils';
 
 const MAX_REVIEW_ATTACHMENTS = 5;
@@ -88,12 +89,13 @@ function WriteReviewForm({ productId, existingReview, onDone }) {
     // body for the common no-photo case keeps this identical to how the
     // endpoint behaved before attachments existed.
     const payload = files.length
-      ? (() => {
+      ? await (async () => {
           const formData = new FormData();
           formData.append('rating', String(rating));
           formData.append('title', title);
           formData.append('comment', comment);
-          files.forEach((file) => formData.append('attachments', file));
+          const compressed = await Promise.all(files.map(compressImage));
+          compressed.forEach((file) => formData.append('attachments', file));
           return formData;
         })()
       : { rating, title, comment };

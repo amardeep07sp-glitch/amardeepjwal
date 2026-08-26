@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/global/EmptyState';
 import { PageLoader } from '@/components/global/Loading';
 import { cn } from '@/lib/utils';
+import { compressImage } from '@/lib/compressImage';
 import { useUploadMedia, useMediaLibrary } from './mediaApi';
 
 // Opt-in via the `mediaType` prop (Collection Engine v2.0's Promo Video
@@ -102,8 +103,13 @@ export function MediaPicker({ value, onChange, entityType, entityId, disabled, a
       return;
     }
 
+    // Video is never touched here (compressImage no-ops on anything that
+    // isn't a raster image type) - only image uploads get resized/
+    // re-encoded before leaving the browser.
+    const uploadFile = await compressImage(file);
+
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', uploadFile);
     formData.append('entityType', entityType);
     formData.append('entityId', entityId);
 
