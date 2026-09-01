@@ -51,6 +51,7 @@ import {
   Flag,
   MessageSquare,
   Send,
+  UserCog,
 } from 'lucide-react';
 
 // Single source of truth for the admin sidebar and breadcrumb labels.
@@ -143,6 +144,12 @@ export const ADMIN_NAV_ITEMS = [
     label: 'Settings',
     path: '/admin/cms/settings',
     icon: Settings,
+    group: 'CMS',
+  },
+  {
+    label: 'Staff Accounts',
+    path: '/admin/settings/staff',
+    icon: UserCog,
     group: 'CMS',
   },
   {

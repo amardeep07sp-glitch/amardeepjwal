@@ -9,12 +9,20 @@ import { PageContainer } from '@/components/global/PageContainer';
 import { ResponsiveGrid } from '@/components/global/ResponsiveGrid';
 import { Skeleton } from '@/components/ui/skeleton';
 import { categoryPath } from '@/config/navConfig';
+import { useSeo } from '@/hooks/useSeo';
+import { APP_NAME, APP_ALTERNATE_NAME, SITE_URL, STORE_LOCALITY, STORE_DISTRICT } from '@/config/appConfig';
 
 const PAGE_SIZE = 20;
 
 export default function AllCategoriesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get('page') ?? 1) || 1;
+
+  useSeo({
+    title: `All Jewellery Categories | ${APP_NAME}`,
+    description: `Browse every jewellery category at ${APP_NAME} (${APP_ALTERNATE_NAME}) - rings, necklaces, earrings, bangles and more, certified hallmark gold & diamond, from our store in ${STORE_LOCALITY}, ${STORE_DISTRICT}.`,
+    canonical: `${SITE_URL}/categories`,
+  });
 
   const { data, isLoading, isError, error, refetch } = useCategoryList({ page, limit: PAGE_SIZE });
 

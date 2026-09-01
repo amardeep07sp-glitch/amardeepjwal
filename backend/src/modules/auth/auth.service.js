@@ -8,6 +8,7 @@ import {
   verifyRefreshToken,
 } from '../../utils/generateTokens.js';
 import { userRepository } from './auth.repository.js';
+import { ROLES } from '../../constants/roles.js';
 import { registrationOtpRepository } from './registrationOtp.repository.js';
 import { storefrontService } from '../storefront/storefront.service.js';
 import { notificationSender } from '../shared/notification.sender.js';
@@ -302,6 +303,46 @@ export const authService = {
   async listStaffUsers({ role, page, limit, search }) {
     const { items, total } = await userRepository.findPaginatedByRole({ role, page, limit, search });
     return { items: items.map(sanitizeUser), total };
+  },
+
+  // Admin -> Settings -> Staff (Super Admin only, see auth.routes.js) - the
+  // real replacement for the admin panel's old (broken, insecure) public
+  // self-registration form. No OTP: the Super Admin creating this account
+  // from inside an already-authenticated session IS the verification -
+  // nothing here reuses completeRegistration's email-code flow.
+  async createStaffUser({ name, email, phone, password, role }) {
+    const existingEmail = await userRepository.findByEmail(email);
+    if (existingEmail) throw new ApiError(409, 'An account with this email already exists.');
+    if (phone) {
+      const existingPhone = await userRepository.findByPhone(phone);
+      if (existingPhone) throw new ApiError(409, 'An account with this mobile number already exists.');
+    }
+
+    const user = await userRepository.create({ name, email, phone, password, role, isActive: true });
+    return sanitizeUser(user);
+  },
+
+  // Role/active-status only - not a general profile editor (name/email/
+  // phone changes go through the same self-service the account's owner
+  // already has, never a side channel a Super Admin pushes on their
+  // behalf). Refuses to target a customer account (this is a staff-roster
+  // tool, not a backdoor into customer records) or the caller's own
+  // account (a Super Admin demoting/deactivating themselves by mistake
+  // would have no one left who could undo it).
+  async updateStaffUser(id, { role, isActive }, actorId) {
+    if (String(id) === String(actorId)) {
+      throw new ApiError(400, 'You cannot change your own role or active status here.');
+    }
+
+    const target = await userRepository.findById(id);
+    if (!target) throw new ApiError(404, 'Staff account not found');
+    if (target.role === ROLES.CUSTOMER) throw new ApiError(403, 'This is not a staff account');
+
+    const user = await userRepository.updateById(id, {
+      ...(role !== undefined ? { role } : {}),
+      ...(isActive !== undefined ? { isActive } : {}),
+    });
+    return sanitizeUser(user);
   },
 
   sanitizeUser,

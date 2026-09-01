@@ -34,10 +34,13 @@ function buildPriceBands(priceRange) {
   }));
 }
 
+// Takes the already-resolved list to show (real categories, or the loading-
+// state placeholder - see CategoryNav's own navCategories below) - no
+// fallback decision made in here, so this never masks a genuine "admin
+// hasn't marked any category showInNavbar yet" empty state as if it were
+// real data.
 function buildNavCategoryItems(categories) {
-  const cats = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES_FALLBACK;
-
-  return cats.map((category) => {
+  return categories.map((category) => {
     const slug = category.slug || category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const shared = {
       name: category.name,
@@ -331,15 +334,23 @@ function CategoryMegaMenuPanel({ megaMenu }) {
 }
 
 export function CategoryNav() {
-  const { data: categories } = useNavbarCategories();
+  const { data: categories, isLoading: categoriesLoading } = useNavbarCategories();
   const { data: customItems } = usePublicNavbarItems();
   const [openIndex, setOpenIndex] = useState(null);
   const [menuRect, setMenuRect] = useState(null);
   const closeTimer = useRef(null);
   const navRef = useRef(null);
 
+  // The loading-state placeholder shows only while the real list hasn't
+  // resolved yet - once it has (even to a genuinely empty array, e.g. no
+  // category is marked "Show in navbar" in Admin -> Catalog -> Categories
+  // yet), that real result wins. Otherwise a store with zero navbar
+  // categories configured would show these 8 made-up categories forever,
+  // most of which link to slugs that don't exist in this store's own catalog.
+  const navCategories = categoriesLoading ? DEFAULT_CATEGORIES_FALLBACK : (categories ?? []);
+
   // Reorganized nav list: Categories first, then Mudrika Brand, then New Arrivals/Offers/More
-  const categoryNavItems = useMemo(() => buildNavCategoryItems(categories ?? []), [categories]);
+  const categoryNavItems = useMemo(() => buildNavCategoryItems(navCategories), [navCategories]);
 
   const navItems = useMemo(
     () => [
@@ -415,7 +426,7 @@ export function CategoryNav() {
             <div className="px-3 py-1.5 text-[11px] font-bold tracking-wider text-[#9A6B12] uppercase">
               All Jewellery Categories
             </div>
-            {((categories && categories.length > 0) ? categories : DEFAULT_CATEGORIES_FALLBACK).map((cat) => (
+            {navCategories.map((cat) => (
               <DropdownMenuItem
                 key={cat.id || cat.slug}
                 asChild

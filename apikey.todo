@@ -197,6 +197,94 @@ everything below is filled in for real.
   a Super Admin already exists.
 
 
+10b) SECURITY / PRODUCTION-READINESS AUDIT (full-project pass) - RESULT
+-----------------------------------------------------
+  Went through backend auth/RBAC, rate limiting, CORS, cookie flags, file
+  upload validation, secret handling, and dependency audit; and checked
+  which content is admin-editable vs hardcoded across both frontends.
+  Overall this backend is genuinely solid - the notes below are real but
+  minor, plus a few business decisions only you can make (not code bugs):
+
+  SECURITY - no real vulnerabilities found. Specifically checked and OK:
+    - JWT secrets/MONGO_URI required at boot (zod-validated), no unsafe
+      defaults; helmet, CORS restricted to CORS_ORIGIN, mongoSanitize,
+      xss-clean, 10kb body limit all active (backend/src/app.js).
+    - Refresh-token cookie: httpOnly + secure(prod) + sameSite=strict,
+      scoped to /api/v1/auth (auth.controller.js) - correct.
+    - Every admin-only route checked uses protect+authorize(role); the
+      only unauthenticated routes are genuinely public ones (sitemap/
+      robots, newsletter subscribe, CIP public tracking).
+    - File uploads: MIME allowlist + size cap enforced at Multer layer,
+      memory storage only (media.upload.middleware.js) - no arbitrary
+      file-type/unbounded-size upload risk.
+    - `npm audit`: client/ and frontend/ are clean (0 vulnerabilities).
+      backend/ has one moderate advisory in exceljs's transitive `uuid`
+      dependency (buffer-bounds issue in v3/v5/v6 generation) - the
+      suggested fix downgrades exceljs itself (worse), and exceljs doesn't
+      call the affected uuid functions the vulnerable way, so this is safe
+      to leave; revisit if exceljs ships a real fix upstream.
+    - bcrypt cost is 10 (auth.model.js) - a deliberate, reasonable
+      speed/security tradeoff (was lowered from a higher cost in an
+      earlier pass), not a vulnerability.
+
+  DYNAMIC / ADMIN-MANAGEABLE - checked Settings (Admin -> Settings) covers
+  everything the storefront reads (contact info, address, socials, SEO
+  defaults, GST/bank details) - it does, fully. Found and fixed two real
+  gaps in this same pass:
+    - Footer.jsx was showing a HARDCODED FAKE showroom address ("Aminabad/
+      Alambagh, Lucknow") and fake phone numbers, instead of the real
+      Settings-driven contact info every other page already used - fixed
+      to read from Settings with real fallbacks.
+    - /faqs was a static, hardcoded page (7 fixed Q&As, not admin-editable)
+      still linked from 3 places (header mega-menu, footer, profile page)
+      alongside the real, fully admin-manageable Help Center (/help -
+      Admin -> Help -> Articles/Categories). A code comment even said Help
+      Center was "replacing" it, but the old page/links were never
+      actually removed. Fixed: /faqs now redirects to /help, all 3 links
+      point at /help, the dead FaqsPage.jsx is removed.
+
+  RESOLVED SINCE THE FIRST AUDIT PASS:
+    - Homepage "Loved by Our Customers" is now REAL DATA, not invented
+      copy. New public endpoint GET /api/v1/reviews/featured (review.
+      repository.js#findFeatured) returns the highest-rated, actually-
+      written approved reviews across every product; Testimonials.jsx
+      renders those (reviewer name, real star rating, Verified Purchase
+      badge, a link back to the real product) and renders NOTHING at all
+      if there aren't any qualifying reviews yet, instead of falling back
+      to placeholder names/quotes. Once real orders/reviews come in this
+      fills itself in with zero further code changes - nothing to do here
+      except actually collect a few real reviews before/soon after launch
+      so the homepage isn't empty on day one.
+    - Naming confirmed: "ADSP" (matching your real logo) is the intended
+      brand short name everywhere. No change needed.
+
+  STILL A CONTENT DECISION - not a code bug:
+    - Footer's "Handcrafting timeless gold, diamond, and polki heirlooms
+      since 1998" - confirm this founding year is actually correct before
+      launch; I can't verify it and left it as-is.
+
+  GOOGLE SEARCH CONSOLE - ready to go, one manual pass left (needs your
+  Google account, can't be scripted):
+    1. Go to https://search.google.com/search-console and add
+       https://amardeepshitalaprashad.com as a property (use the "Domain"
+       property type if you can edit DNS, otherwise "URL prefix").
+    2. Domain property: add the TXT record Google gives you to your DNS.
+       URL-prefix property: choose the "HTML tag" method, copy the
+       content="..." value it gives you, and paste it into
+       client/index.html - it already has a ready, commented-out
+       <meta name="google-site-verification"> tag waiting for that exact
+       value (search that file for "PASTE_THE_REAL_CODE_HERE"). Uncomment
+       it, redeploy, then click Verify in Search Console.
+    3. Once verified: Sitemaps -> add https://amardeepshitalaprashad.com/
+       sitemap.xml (already live and correct - backend/src/modules/seo).
+    4. URL Inspection -> paste your homepage URL -> "Request Indexing".
+       This is also what gets Google to pick up the new favicon/title
+       faster than waiting for its normal recrawl schedule.
+    No GA/GTM is set up, and that's intentional - this project has its own
+    in-house analytics (the CIP module, Admin -> CIP Dashboard), not a
+    dependency on Google Analytics.
+
+
 10) OPTIONAL, NOT YET ADDED (mentioned here so you don't forget):
 -----------------------------------------------------
   - Error monitoring (e.g. Sentry) - not wired into the codebase at all

@@ -12,3 +12,15 @@ export const useProductReviews = (slug, { page = 1, limit = 10 } = {}) =>
     enabled: Boolean(slug),
     placeholderData: keepPreviousData,
   });
+
+// The homepage "Loved by Our Customers" section's real data source - the
+// highest-rated, actually-written approved reviews across every product
+// (review.repository.js#findFeatured), not invented quotes. Empty on a
+// fresh store with no reviews yet - Testimonials.jsx hides the whole
+// section in that case rather than backfilling with placeholder copy.
+export const useFeaturedReviews = (limit = 6) =>
+  useQuery({
+    queryKey: ['storefront', 'reviews', 'featured', limit],
+    queryFn: async () => (await api.get('/reviews/featured', { params: { limit } })).data,
+    staleTime: 10 * 60 * 1000,
+  });

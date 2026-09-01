@@ -9,6 +9,12 @@ export const publicProductReviewsQuerySchema = z.object({
   }),
 });
 
+export const featuredReviewsQuerySchema = z.object({
+  query: z.object({
+    limit: z.coerce.number().int().positive().max(12).default(6),
+  }),
+});
+
 export const submitReviewSchema = z.object({
   params: z.object({ productId: z.string() }),
   body: z.object({

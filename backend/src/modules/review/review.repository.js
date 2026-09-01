@@ -69,6 +69,22 @@ export const reviewRepository = {
       .populate({ path: 'product', select: 'name slug' });
   },
 
+  // Homepage "testimonials" (real, not invented copy) - approved, highly
+  // rated, and with actual written text (a bare 5-star/no-comment row makes
+  // a poor quote card) - across every product, newest of those first so a
+  // recent great review surfaces over one from years ago.
+  findFeatured({ limit }) {
+    return Review.find({
+      status: REVIEW_STATUSES.APPROVED,
+      rating: { $gte: 4 },
+      comment: { $exists: true, $ne: '' },
+    })
+      .populate(CUSTOMER_POPULATE)
+      .populate({ path: 'product', select: 'name slug' })
+      .sort({ rating: -1, createdAt: -1 })
+      .limit(limit);
+  },
+
   // Admin moderation queue - every status, searchable by product/customer
   // name via a two-step id resolution (same pattern order/invoice search use).
   async findPaginated({ page, limit, status, productId }) {

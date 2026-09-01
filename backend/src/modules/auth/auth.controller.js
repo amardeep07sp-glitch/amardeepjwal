@@ -90,3 +90,13 @@ export const listStaffUsers = asyncHandler(async (req, res) => {
   const { items, total } = await authService.listStaffUsers(req.query);
   res.status(200).json(new ApiResponse(200, { items, meta: { page: req.query.page, limit: req.query.limit, totalItems: total } }, 'Staff users fetched successfully'));
 });
+
+export const createStaff = asyncHandler(async (req, res) => {
+  const user = await authService.createStaffUser(req.body);
+  res.status(201).json(new ApiResponse(201, user, 'Staff account created successfully'));
+});
+
+export const updateStaff = asyncHandler(async (req, res) => {
+  const user = await authService.updateStaffUser(req.params.id, req.body, req.user._id);
+  res.status(200).json(new ApiResponse(200, user, 'Staff account updated successfully'));
+});

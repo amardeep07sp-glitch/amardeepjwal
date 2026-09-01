@@ -4,7 +4,8 @@ import { PageContainer } from '@/components/global/PageContainer';
 import { BackButton } from '@/components/global/BackButton';
 import { Breadcrumb } from '@/components/global/Breadcrumb';
 import { Skeleton } from '@/components/ui/skeleton';
-import { APP_NAME } from '@/config/appConfig';
+import { useSeo } from '@/hooks/useSeo';
+import { APP_NAME, APP_ALTERNATE_NAME, SITE_URL, STORE_LOCALITY, STORE_DISTRICT } from '@/config/appConfig';
 
 // Real business contact details only (settings.serializer.js#
 // serializePublicSettings) - a field the store hasn't filled in yet
@@ -14,6 +15,12 @@ import { APP_NAME } from '@/config/appConfig';
 // tel: link (real, functional right now) beats a form that goes nowhere.
 export default function ContactPage() {
   const { data: settings, isLoading } = usePublicSettings();
+
+  useSeo({
+    title: `Contact Us | ${APP_NAME}`,
+    description: `Get in touch with ${APP_NAME} (${APP_ALTERNATE_NAME}) in ${STORE_LOCALITY}, ${STORE_DISTRICT} - call, WhatsApp, email, or visit our store.`,
+    canonical: `${SITE_URL}/contact`,
+  });
 
   const contactRows = settings
     ? [

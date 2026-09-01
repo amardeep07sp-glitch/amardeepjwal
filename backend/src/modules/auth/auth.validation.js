@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ROLE_VALUES } from '../../constants/roles.js';
+import { ROLE_VALUES, STAFF_ROLES } from '../../constants/roles.js';
 
 export const listStaffUsersQuerySchema = z.object({
   query: z.object({
@@ -68,5 +68,27 @@ export const resetPasswordSchema = z.object({
     email: z.string().email('Enter a valid email address'),
     token: z.string().min(1, 'Reset token is required'),
     newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+  }),
+});
+
+// Admin-provisioned staff account (Super Admin only - see auth.routes.js) -
+// distinct from completeRegistrationSchema above, which is the customer
+// storefront's own OTP-verified self-signup. No OTP here: the Super Admin
+// creating the account is itself the verification.
+export const createStaffSchema = z.object({
+  body: z.object({
+    name: z.string().trim().min(2, 'Name must be at least 2 characters'),
+    email: z.string().trim().email('Invalid email address'),
+    phone: phoneSchema.optional(),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    role: z.enum(STAFF_ROLES, { errorMap: () => ({ message: 'Select a valid staff role' }) }),
+  }),
+});
+
+export const updateStaffSchema = z.object({
+  params: z.object({ id: z.string() }),
+  body: z.object({
+    role: z.enum(STAFF_ROLES).optional(),
+    isActive: z.boolean().optional(),
   }),
 });

@@ -12,6 +12,8 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   listStaffUsersQuerySchema,
+  createStaffSchema,
+  updateStaffSchema,
 } from './auth.validation.js';
 import {
   startRegistration,
@@ -25,6 +27,8 @@ import {
   resetPassword,
   getMe,
   listStaffUsers,
+  createStaff,
+  updateStaff,
 } from './auth.controller.js';
 
 const router = Router();
@@ -44,5 +48,13 @@ router.get('/me', protect, getMe);
 // viewer can look up staff by name, same visibility bar as every other
 // staff-directory-shaped read in this app.
 router.get('/users', protect, authorize(...VIEW_ROLES, ROLES.SUPPORT_AGENT, ROLES.SUPPORT_MANAGER), validate(listStaffUsersQuerySchema), listStaffUsers);
+
+// Staff provisioning (Admin -> Settings -> Staff) - Super Admin only, not
+// the broader PRIVILEGED_ROLES set every other "manage" route in this app
+// uses. Creating an account that can itself hold super_admin/admin is a
+// meaningfully bigger blast radius than managing catalog/orders/etc., so
+// this stays deliberately narrower than that shared precedent.
+router.post('/staff', protect, authorize(ROLES.SUPER_ADMIN), validate(createStaffSchema), createStaff);
+router.patch('/staff/:id', protect, authorize(ROLES.SUPER_ADMIN), validate(updateStaffSchema), updateStaff);
 
 export default router;

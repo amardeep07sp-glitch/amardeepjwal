@@ -25,7 +25,7 @@ import { usePublicFooterColumns } from '@/features/footer/footerApi';
 import { useSubscribeNewsletter } from '@/features/newsletter/newsletterApi';
 import { usePublicSettings } from '@/features/settings/settingsApi';
 import { DEFAULT_CATEGORIES_FALLBACK, categoryPath } from '@/config/navConfig';
-import { APP_NAME, APP_SHORT_NAME } from '@/config/appConfig';
+import { APP_NAME, APP_SHORT_NAME, SUPPORT_PHONE, SUPPORT_EMAIL, STORE_ADDRESS_FALLBACK } from '@/config/appConfig';
 import { SmartLink } from '@/components/global/SmartLink';
 
 const TRUST_PILLARS = [
@@ -56,7 +56,6 @@ const CUSTOMER_SERVICE_LINKS = [
   { label: 'Track Your Order', path: '/track-order' },
   { label: 'Help Center & Support', path: '/help' },
   { label: 'Contact Us', path: '/contact' },
-  { label: 'Frequently Asked Questions', path: '/faqs' },
   { label: 'Book Store Appointment', path: '/contact' },
 ];
 
@@ -85,13 +84,17 @@ const PAYMENT_METHODS = [
 ];
 
 export function Footer() {
-  const { data: categories } = useNavbarCategories();
+  const { data: categories, isLoading: categoriesLoading } = useNavbarCategories();
   const { data: extraColumns } = usePublicFooterColumns();
   const { data: settings } = usePublicSettings();
   const [email, setEmail] = useState('');
   const subscribeNewsletter = useSubscribeNewsletter();
 
-  const activeCategories = (categories && categories.length > 0) ? categories : DEFAULT_CATEGORIES_FALLBACK;
+  // The loading-state placeholder only covers the brief window before the
+  // real list resolves - once it has (even to a genuinely empty array), that
+  // real result wins rather than showing 8 made-up categories forever (see
+  // CategoryNav.jsx's identical navCategories for the full reasoning).
+  const activeCategories = categoriesLoading ? DEFAULT_CATEGORIES_FALLBACK : (categories ?? []);
   const activeSocialLinks = SOCIAL_PLATFORMS.map((p) => ({ ...p, url: settings?.socialLinks?.[p.key] })).filter((p) => p.url);
 
   const handleSubscribe = (e) => {
@@ -196,19 +199,25 @@ export function Footer() {
               Handcrafting timeless gold, diamond, and polki heirlooms since 1998. Every creation celebrates royal Indian heritage, pure BIS 916 hallmarking, and lifelong trust.
             </p>
 
-            {/* Showroom & Contact Details */}
+            {/* Showroom & Contact Details - real settings-driven data (Admin
+                -> Settings), falling back to the real store locality/support
+                line/inbox rather than an invented placeholder. */}
             <div className="space-y-2 pt-1 text-xs text-[#C7BCAD]">
               <div className="flex items-start gap-2.5">
                 <MapPin className="size-4 shrink-0 text-[#D4AF37] mt-0.5" />
-                <span>Showroom: Aminabad / Alambagh, Lucknow, Uttar Pradesh - 226001</span>
+                <span>Showroom: {settings?.address || STORE_ADDRESS_FALLBACK}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="size-4 shrink-0 text-[#D4AF37]" />
-                <span>Customer Care: +91 94150 00000 / +91 522 000000</span>
+                <a href={`tel:${(settings?.contactPhone || SUPPORT_PHONE).replace(/\s+/g, '')}`} className="hover:text-[#FCE08B]">
+                  Customer Care: {settings?.contactPhone || SUPPORT_PHONE}
+                </a>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="size-4 shrink-0 text-[#D4AF37]" />
-                <span>Email: contact@amardeepshitalaprashad.com</span>
+                <a href={`mailto:${settings?.contactEmail || SUPPORT_EMAIL}`} className="hover:text-[#FCE08B]">
+                  Email: {settings?.contactEmail || SUPPORT_EMAIL}
+                </a>
               </div>
             </div>
 

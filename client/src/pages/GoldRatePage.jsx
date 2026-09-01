@@ -7,6 +7,8 @@ import { EmptyState } from '@/components/global/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatPrice } from '@/lib/format';
 import { METAL_TREND_ICON } from '@/lib/metalTrend';
+import { useSeo } from '@/hooks/useSeo';
+import { APP_NAME, APP_ALTERNATE_NAME, SITE_URL, STORE_LOCALITY } from '@/config/appConfig';
 
 const TREND_COLOR = { up: 'text-emerald-600', down: 'text-rose-600', same: 'text-muted-foreground' };
 const TREND_LABEL = { up: 'Up since last update', down: 'Down since last update', same: 'Unchanged' };
@@ -25,6 +27,12 @@ export default function GoldRatePage() {
   // would read as a broken page, not "not entered yet", so this branches
   // to a real empty state instead.
   const hasRates = rates && [rates.gold24k, rates.gold22k, rates.gold18k, rates.silver].some((v) => v > 0);
+
+  useSeo({
+    title: `Today's Gold & Silver Rate | ${APP_NAME}`,
+    description: `Check today's 24K, 22K and 18K gold rate and silver rate per gram at ${APP_NAME} (${APP_ALTERNATE_NAME}), ${STORE_LOCALITY}.`,
+    canonical: `${SITE_URL}/gold-rate`,
+  });
 
   return (
     <PageContainer top="md" bottom="md">

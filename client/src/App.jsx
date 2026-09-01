@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { ScrollToTop } from '@/routes/ScrollToTop';
 import { PageViewTracker } from '@/routes/PageViewTracker';
 import { ApplyTypography } from '@/components/global/ApplyTypography';
@@ -27,7 +27,6 @@ import RewardsPage from '@/pages/RewardsPage';
 import TrackOrderPage from '@/pages/TrackOrderPage';
 import GoldRatePage from '@/pages/GoldRatePage';
 import ContactPage from '@/pages/ContactPage';
-import FaqsPage from '@/pages/FaqsPage';
 import AddressesPage from '@/pages/AddressesPage';
 import HelpCenterPage from '@/pages/HelpCenterPage';
 import HelpArticlePage from '@/pages/HelpArticlePage';
@@ -78,7 +77,12 @@ export default function App() {
           <Route path="track-order" element={<TrackOrderPage />} />
           <Route path="gold-rate" element={<GoldRatePage />} />
           <Route path="contact" element={<ContactPage />} />
-          <Route path="faqs" element={<FaqsPage />} />
+          {/* /faqs was a static, hardcoded page (not admin-editable) that the
+              real, CMS-driven Help Center (/help - HelpCenterPage.jsx) was
+              already meant to replace (see that file's own header comment) -
+              this redirect finishes that migration instead of leaving both
+              live side by side as two different "answers to questions" UIs. */}
+          <Route path="faqs" element={<Navigate to="/help" replace />} />
           <Route path="pages/:slug" element={<CmsPage />} />
           <Route path="addresses" element={<AddressesPage />} />
           <Route path="help" element={<HelpCenterPage />} />

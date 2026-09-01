@@ -146,7 +146,12 @@ export default function CheckoutPage() {
           return;
         }
         clearCart();
-        navigate(`/order-confirmation/${result.order.id}`);
+        // Straight to My Orders (not the order-confirmation page - that
+        // route still exists and works, it's just no longer where checkout
+        // itself lands) - `state` carries the order number for one success
+        // banner there instead of losing that "it went through" feedback
+        // entirely.
+        navigate('/orders', { state: { placedOrderNumber: result.order.orderNumber } });
         return;
       }
 
@@ -192,7 +197,7 @@ export default function CheckoutPage() {
               razorpaySignature: response.razorpay_signature,
             });
             clearCart();
-            navigate(`/order-confirmation/${result.order.id}`);
+            navigate('/orders', { state: { placedOrderNumber: result.order.orderNumber } });
           } catch (err) {
             setCheckoutError(`Payment succeeded but verification failed: ${err.message}. Please contact us with order ${result.order.orderNumber}.`);
           }

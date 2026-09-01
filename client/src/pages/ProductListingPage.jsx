@@ -17,6 +17,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useSeo } from '@/hooks/useSeo';
+import { APP_NAME, APP_ALTERNATE_NAME, SITE_URL, STORE_LOCALITY, STORE_DISTRICT } from '@/config/appConfig';
 
 const PAGE_SIZE = 12;
 
@@ -76,6 +78,27 @@ export default function ProductListingPage({ title, sortBy: fixedSortBy, onSale 
   });
 
   const heading = slug ? (category?.name ?? ' ') : search ? `Search results for "${search}"` : title;
+
+  // Canonicalized to the bare path (no ?sortBy=/?page=/?categories= etc.) -
+  // those query combinations are the same underlying listing, and letting
+  // each filter combination self-canonicalize would just split one page's
+  // ranking signal across many near-duplicate URLs. `/search` stays out of
+  // this (robots.txt already disallows it - see sitemap.service.js).
+  useSeo({
+    title: slug
+      ? category
+        ? `${category.name} | ${APP_NAME}`
+        : undefined
+      : search
+        ? `Search results for "${search}" | ${APP_NAME}`
+        : `${title} | ${APP_NAME}`,
+    description: slug
+      ? category
+        ? `Shop ${category.name} at ${APP_NAME} (${APP_ALTERNATE_NAME}) - certified BIS hallmark gold & diamond jewellery in ${STORE_LOCALITY}, ${STORE_DISTRICT}. Free shipping across India.`
+        : undefined
+      : `${title} at ${APP_NAME} (${APP_ALTERNATE_NAME}) - certified BIS hallmark gold & diamond jewellery in ${STORE_LOCALITY}, ${STORE_DISTRICT}. Free shipping across India.`,
+    canonical: `${SITE_URL}${window.location.pathname}`,
+  });
 
   // One `search` event per distinct query, when its results actually land
   // (not per keystroke - that's SearchBar's own autocomplete, a different

@@ -97,6 +97,13 @@ export const reviewService = {
     if (existing.status === REVIEW_STATUSES.APPROVED) await recomputeProductRating(productId);
   },
 
+  // Public, site-wide - the homepage's real "customer testimonials" source
+  // (Home no longer shows invented names/quotes). No pagination - this is a
+  // small, fixed-size showcase, not a browsable list.
+  listFeatured(limit) {
+    return reviewRepository.findFeatured({ limit });
+  },
+
   // --- Admin moderation -----------------------------------------------------
 
   async listReviews(query) {

@@ -1,14 +1,16 @@
 import { AccountSidebar } from './AccountSidebar';
-import { AccountMobileNav } from './AccountMobileNav';
 import { PageContainer } from '@/components/global/PageContainer';
 import { BackButton } from '@/components/global/BackButton';
 import { Breadcrumb } from '@/components/global/Breadcrumb';
 
 // Shared shell for every "My Account" page (Orders/Profile/Addresses) -
-// AccountSidebar only renders at lg+; AccountMobileNav is its horizontal
-// pill-row equivalent below that, so every account section stays reachable
-// on mobile/tablet instead of only via the browser back button.
-export function AccountLayout({ title, subtitle, icon: Icon, breadcrumbLabel, headerExtra, hideMobileNav = false, children }) {
+// AccountSidebar only renders at lg+. Below that, the hamburger MobileMenu's
+// own account quick-links (My Orders/Rewards/Addresses/Support, plus
+// Profile and Wishlist elsewhere in that same drawer) are the way to reach
+// another account section - this layout used to repeat that same pill row
+// again on every account page, which was pure duplicate navigation chrome
+// stacked between the breadcrumb and the page title.
+export function AccountLayout({ title, subtitle, icon: Icon, breadcrumbLabel, headerExtra, children }) {
   return (
     <PageContainer top="sm" bottom="md">
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -26,8 +28,6 @@ export function AccountLayout({ title, subtitle, icon: Icon, breadcrumbLabel, he
         </div>
         {headerExtra}
       </div>
-
-      {!hideMobileNav && <AccountMobileNav className="mb-5 lg:hidden" />}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
         <AccountSidebar className="hidden lg:flex" />

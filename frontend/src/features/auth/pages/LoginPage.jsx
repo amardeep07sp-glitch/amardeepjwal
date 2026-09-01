@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { 
   Lock, 
@@ -177,18 +177,13 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Register Link */}
-        <div className="pt-2 text-center">
-          <p className="text-xs text-zinc-400">
-            Need staff access?{' '}
-            <Link 
-              to="/register" 
-              className="font-medium text-amber-400 hover:text-amber-300 underline underline-offset-4 transition-colors"
-            >
-              Create an account
-            </Link>
-          </p>
-        </div>
+        {/* No self-registration link here on purpose - an admin/staff
+            account is provisioned for you (currently via
+            backend/scripts/seedSuperAdmin.js - see apikey.todo item #9),
+            never self-signed-up. A public "Create an account" on a panel
+            that controls real orders/inventory/customer data is a real
+            security hole, and it was quietly broken anyway (it skipped the
+            OTP step the shared /auth/register endpoint actually requires). */}
       </form>
     </AuthLayout>
   );

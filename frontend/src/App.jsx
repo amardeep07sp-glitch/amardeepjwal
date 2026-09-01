@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from '@/features/auth/pages/LoginPage';
-import RegisterPage from '@/features/auth/pages/RegisterPage';
 import AdminLayout from '@/features/admin/layout/AdminLayout';
 import DashboardPage from '@/features/admin/dashboard/DashboardPage';
 import ProductsListPage from '@/features/admin/catalog/products/ProductsListPage';
@@ -70,6 +69,7 @@ import SupportTicketDetailPage from '@/features/admin/support/SupportTicketDetai
 import SupportSettingsPage from '@/features/admin/support/SupportSettingsPage';
 import IssuesListPage from '@/features/admin/issues/IssuesListPage';
 import FeedbackListPage from '@/features/admin/feedback/FeedbackListPage';
+import StaffListPage from '@/features/admin/staff/StaffListPage';
 import ProtectedRoute from '@/routes/ProtectedRoute';
 import { ScrollToTop } from '@/routes/ScrollToTop';
 import NotFoundPage from '@/pages/errors/NotFoundPage';
@@ -82,7 +82,6 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
 
         <Route element={<ProtectedRoute allowedRoles={ADMIN_ROLES} />}>
           <Route path="/admin" element={<AdminLayout />}>
@@ -103,6 +102,7 @@ export default function App() {
             <Route path="cms/banners" element={<BannersListPage />} />
             <Route path="cms/pages" element={<PagesListPage />} />
             <Route path="cms/settings" element={<SettingsPage />} />
+            <Route path="settings/staff" element={<StaffListPage />} />
 
             <Route path="inventory/dashboard" element={<InventoryDashboardPage />} />
             <Route path="inventory" element={<InventoryListPage />} />

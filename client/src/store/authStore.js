@@ -75,6 +75,20 @@ const authFetch = async (path, body, accessToken) => {
   return data.data;
 };
 
+// The real fix for the "logged out mid-checkout" bug: refresh tokens rotate
+// server-side (auth.service.js#refresh issues a brand-new one and
+// overwrites refreshTokenHash every time) - a security good practice, but
+// it means only the FIRST of several requests that all 401 at once (e.g.
+// checkout firing off addresses/cart/product-list calls together right as
+// the access token expires) can actually redeem the refresh cookie.
+// Without this guard, every other simultaneous 401 would independently call
+// /refresh-token with that same now-already-spent cookie, get "Invalid
+// session" back, and clearSession() - signing the customer out of a session
+// that was, in reality, perfectly fine. Caching the in-flight promise so
+// every concurrent caller awaits the one real network call instead of
+// starting their own is the standard fix for this exact race.
+let refreshPromise = null;
+
 export const useAuthStore = create((set, get) => ({
   user: null,
   accessToken: null,
@@ -129,14 +143,22 @@ export const useAuthStore = create((set, get) => ({
   // stale/expired accessToken shouldn't sign a visitor out mid-browse if
   // their refresh cookie is still good.
   async refreshSession() {
-    try {
-      const result = await authFetch('/refresh-token');
-      get().setSession(result);
-      return true;
-    } catch {
-      get().clearSession();
-      return false;
-    }
+    if (refreshPromise) return refreshPromise;
+
+    refreshPromise = (async () => {
+      try {
+        const result = await authFetch('/refresh-token');
+        get().setSession(result);
+        return true;
+      } catch {
+        get().clearSession();
+        return false;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+
+    return refreshPromise;
   },
 
   // Called once, at app start (see App.jsx) - the one deliberate exception

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CreditCard, Gem, Package, RotateCw, Wallet } from 'lucide-react';
+import { CheckCircle2, CreditCard, Gem, Package, RotateCw, Wallet, X } from 'lucide-react';
 import { useMyOrders } from '@/features/storefront/storefrontApi';
 import { useAuthStore } from '@/store/authStore';
 import { buyOrderAgain } from '@/lib/buyAgain';
@@ -29,16 +29,21 @@ const STATUS_STYLE = {
   draft: 'bg-muted text-muted-foreground',
 };
 
-// Real statuses only (order.constants.js) - no "Placed"/"Out for Delivery"
-// tab, since neither is a distinct status this backend's order lifecycle
-// actually has (a placed order goes straight to "confirmed"; there's no
-// granular out-for-delivery step between shipped and delivered).
+// Buyer-facing status buckets, not a 1:1 tab-per-raw-status list - a
+// customer filtering "Shipped" wants every order actually in transit
+// (packed/ready_to_ship/shipped/partially_shipped are all "it's on its way"
+// from their side of the counter), not just the ones whose orderStatus
+// string happens to be the exact word "shipped". Same idea for "Delivered"
+// (partially_delivered/completed both mean "it arrived") and "Cancelled"
+// (a return or refund is a cancellation outcome too). Adding a new raw
+// backend status later means adding it to the right bucket here - never a
+// new tab, new state, or new case anywhere else on this page.
 const STATUS_TABS = [
-  { label: 'All', value: undefined },
-  { label: 'Confirmed', value: 'confirmed' },
-  { label: 'Shipped', value: 'shipped' },
-  { label: 'Delivered', value: 'delivered' },
-  { label: 'Cancelled', value: 'cancelled' },
+  { key: 'all', label: 'All', statuses: undefined },
+  { key: 'confirmed', label: 'Confirmed', statuses: ['confirmed'] },
+  { key: 'shipped', label: 'Shipped', statuses: ['packed', 'ready_to_ship', 'shipped', 'partially_shipped'] },
+  { key: 'delivered', label: 'Delivered', statuses: ['delivered', 'partially_delivered', 'completed'] },
+  { key: 'cancelled', label: 'Cancelled', statuses: ['cancelled', 'returned', 'refunded'] },
 ];
 
 const PAYMENT_METHOD_LABEL = { cod: 'Cash on Delivery', razorpay: 'Online Payment' };
@@ -109,16 +114,29 @@ function OrderRow({ order, index, onBuyAgain, buyAgainState }) {
 
 export default function MyOrdersPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const isInitializing = useAuthStore((s) => s.isInitializing);
-  const [statusFilter, setStatusFilter] = useState(undefined);
+  const [activeTabKey, setActiveTabKey] = useState('all');
   const [page, setPage] = useState(1);
   const [buyAgainState, setBuyAgainState] = useState({ orderId: null, status: 'idle' });
-  const { data, isLoading, isError, error, refetch } = useMyOrders({ page, limit: 10, orderStatus: statusFilter });
+  // Checkout now lands here directly instead of a separate order-
+  // confirmation page (CheckoutPage.jsx#handlePlaceOrder) - this is the one
+  // place that "your order went through" feedback still shows, read once
+  // from router state so it survives the redirect but not a later refresh
+  // of this same page.
+  const [placedOrderNumber, setPlacedOrderNumber] = useState(location.state?.placedOrderNumber ?? null);
+  const activeTab = STATUS_TABS.find((tab) => tab.key === activeTabKey) ?? STATUS_TABS[0];
+  const { data, isLoading, isError, error, refetch } = useMyOrders({ page, limit: 10, orderStatus: activeTab.statuses });
 
   useEffect(() => {
     if (!isInitializing && !user) navigate('/login', { replace: true });
   }, [isInitializing, user, navigate]);
+
+  useEffect(() => {
+    if (location.state?.placedOrderNumber) navigate(location.pathname, { replace: true, state: {} });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleBuyAgain = async (orderId) => {
     setBuyAgainState({ orderId, status: 'pending' });
@@ -138,28 +156,51 @@ export default function MyOrdersPage() {
 
   return (
     <AccountLayout title="My Orders" subtitle="Track, return, or buy items again" icon={Package} breadcrumbLabel="My Orders">
-      {/* Smaller + outlined vs. AccountMobileNav's pills right above (same
-          page, different job - that's account section navigation, this is
-          an in-page filter) so the two rows don't blend into one another. */}
-      <div className="scrollbar-none mb-5 flex items-center gap-1.5 overflow-x-auto pb-0.5">
-        {STATUS_TABS.map((tab) => (
+      {placedOrderNumber && (
+        <div className="mb-5 flex items-start gap-3 rounded-2xl bg-success/10 p-4 ring-1 ring-success/30">
+          <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-heading">Order placed successfully!</p>
+            <p className="text-xs text-muted-foreground">
+              Your order <span className="font-medium text-heading">{placedOrderNumber}</span> has been confirmed.
+            </p>
+          </div>
           <button
-            key={tab.label}
             type="button"
-            onClick={() => {
-              setStatusFilter(tab.value);
-              setPage(1);
-            }}
-            className={cn(
-              'shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors',
-              statusFilter === tab.value
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-card text-muted-foreground ring-1 ring-border hover:text-foreground'
-            )}
+            onClick={() => setPlacedOrderNumber(null)}
+            aria-label="Dismiss"
+            className="shrink-0 rounded-full p-1 text-muted-foreground hover:bg-success/15 hover:text-foreground"
           >
-            {tab.label}
+            <X className="size-4" />
           </button>
-        ))}
+        </div>
+      )}
+
+      {/* The trailing gradient hints there's more to scroll past the edge
+          on mobile, instead of the row just looking cut off mid-label. */}
+      <div className="relative mb-5">
+        <div className="scrollbar-none flex items-center gap-2 overflow-x-auto pb-0.5">
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => {
+                setActiveTabKey(tab.key);
+                setPage(1);
+              }}
+              aria-pressed={activeTabKey === tab.key}
+              className={cn(
+                'shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium whitespace-nowrap transition-colors',
+                activeTabKey === tab.key
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card text-muted-foreground ring-1 ring-border hover:text-foreground'
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-linear-to-l from-background to-transparent" />
       </div>
 
       {buyAgainState.status === 'error' && (

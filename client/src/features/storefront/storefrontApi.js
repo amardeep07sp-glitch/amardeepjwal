@@ -53,11 +53,18 @@ export const useVerifyRazorpayPayment = () =>
     mutationFn: (payload) => api.post('/storefront/payments/razorpay/verify', payload).then((res) => res.data),
   });
 
-export const useMyOrders = ({ page = 1, limit = 20, orderStatus } = {}) =>
-  useQuery({
-    queryKey: ['storefront', 'orders', { page, limit, orderStatus }],
-    queryFn: async () => (await api.get('/storefront/orders', { params: { page, limit, orderStatus } })).data,
+// `orderStatus` is a single status or an array of them (a My Orders status
+// tab covers a bucket of raw statuses, e.g. Shipped = shipped +
+// partially_shipped + ready_to_ship - see MyOrdersPage.jsx#STATUS_TABS) -
+// joined into one comma-separated query value either way, matching
+// storefront.validation.js#listMyOrdersQuerySchema's parsing.
+export const useMyOrders = ({ page = 1, limit = 20, orderStatus } = {}) => {
+  const orderStatusParam = Array.isArray(orderStatus) ? orderStatus.join(',') : orderStatus;
+  return useQuery({
+    queryKey: ['storefront', 'orders', { page, limit, orderStatus: orderStatusParam }],
+    queryFn: async () => (await api.get('/storefront/orders', { params: { page, limit, orderStatus: orderStatusParam } })).data,
   });
+};
 
 export const useMyOrder = (orderId) =>
   useQuery({

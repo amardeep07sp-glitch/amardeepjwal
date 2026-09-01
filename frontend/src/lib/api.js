@@ -50,7 +50,13 @@ async function request(path, { method = 'GET', body, params, skipAuth = false, r
   }
 
   if (!res.ok) {
-    const error = new Error(data?.message || 'Something went wrong');
+    // A request-validation failure (validate.middleware.js) always sends
+    // the same generic top-level message ("Validation failed") plus the
+    // real per-field reason in `errors` - surfacing that first field's
+    // message instead is what makes an admin form show something actually
+    // actionable. Every other error path (business-logic ApiErrors) never
+    // populates `errors`, so this only ever changes the validation case.
+    const error = new Error(data?.errors?.[0]?.message || data?.message || 'Something went wrong');
     error.statusCode = res.status;
     error.errors = data?.errors;
     throw error;

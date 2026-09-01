@@ -6,7 +6,13 @@ import {
   serializeReviewList,
   serializeReportedReviewList,
   serializeReviewReportList,
+  serializePublicFeaturedReviewList,
 } from './review.serializer.js';
+
+export const getFeaturedReviews = asyncHandler(async (req, res) => {
+  const reviews = await reviewService.listFeatured(req.query.limit);
+  res.status(200).json(new ApiResponse(200, serializePublicFeaturedReviewList(reviews), 'Featured reviews fetched successfully'));
+});
 
 export const listReviews = asyncHandler(async (req, res) => {
   const { items, meta } = await reviewService.listReviews(req.query);

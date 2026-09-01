@@ -34,6 +34,26 @@ export const serializePublicReview = (review) => {
 
 export const serializePublicReviewList = (reviews) => reviews.map(serializePublicReview);
 
+// Homepage testimonials - same reviewer-name-only privacy rule as
+// serializePublicReview, plus which product this is real feedback about
+// (the card links back to it, unlike the old invented-quote cards which
+// linked nowhere).
+export const serializePublicFeaturedReview = (review) => {
+  const plain = typeof review.toObject === 'function' ? review.toObject() : review;
+  return {
+    id: plain._id,
+    reviewerName: plain.customer?.displayName ?? 'Anonymous',
+    rating: plain.rating,
+    title: plain.title,
+    comment: plain.comment,
+    isVerifiedPurchase: plain.isVerifiedPurchase,
+    product: serializeProductRef(plain.product),
+    createdAt: plain.createdAt,
+  };
+};
+
+export const serializePublicFeaturedReviewList = (reviews) => reviews.map(serializePublicFeaturedReview);
+
 // Full shape - the reviewer's own read of their review, and the admin
 // moderation queue.
 export const serializeReview = (review) => {

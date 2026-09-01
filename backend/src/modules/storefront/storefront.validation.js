@@ -106,7 +106,18 @@ export const listMyOrdersQuerySchema = z.object({
   query: z.object({
     page: z.coerce.number().min(1).default(1),
     limit: z.coerce.number().min(1).max(50).default(20),
-    orderStatus: z.enum(Object.values(ORDER_STATUSES)).optional(),
+    // Comma-separated, e.g. "shipped,partially_shipped,ready_to_ship" - the
+    // My Orders status tabs are broader buyer-facing buckets than a single
+    // raw lifecycle status (see MyOrdersPage.jsx#STATUS_TABS), so a customer
+    // filtering "Shipped" sees every order actually in transit, not just
+    // the ones whose status string happens to be exactly "shipped".
+    orderStatus: z
+      .string()
+      .optional()
+      .transform((value) => value?.split(',').filter(Boolean))
+      .refine((statuses) => !statuses || statuses.every((s) => Object.values(ORDER_STATUSES).includes(s)), {
+        message: 'Invalid order status',
+      }),
   }),
 });
 

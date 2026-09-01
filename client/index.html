@@ -3,11 +3,66 @@
 
 <head>
   <meta charset="UTF-8" />
+  <!-- /favicon.ico is also what Googlebot and older browsers request
+       directly at the domain root regardless of these <link> tags - see
+       client/public/favicon.ico (generated from the real logo, not the
+       ADSP-monogram favicon.svg below, since that SVG's <text> needs fonts
+       that aren't guaranteed to be available wherever it gets rasterized -
+       PNG/ICO have no such dependency). -->
+  <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light" />
-  <title>Amardeep Swarna Kala Kendra</title>
-  <meta name="description" content="Amardeep Swarna Kala Kendra - Certified hallmark gold & diamond jewellery, crafted to perfection." />
+  <meta name="theme-color" content="#2A080C" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Google Search Console domain ownership - uncomment and paste the
+       real content="..." value Search Console gives you (Settings ->
+       Ownership verification -> HTML tag method) after adding
+       https://amardeepshitalaprashad.com as a property. See apikey.todo's
+       Search Console section for the full one-time setup checklist
+       (verify -> submit sitemap.xml -> Request Indexing on the homepage).
+  <meta name="google-site-verification" content="PASTE_THE_REAL_CODE_HERE" />
+  -->
+
+
+  <!-- Default/fallback tags for the very first paint and for any crawler
+       that doesn't execute JS - client/src/hooks/useSeo.js overwrites all
+       of these per-page once React mounts (see that file's header comment
+       for why both layers exist). Keep this in sync with SITE_URL/APP_NAME/
+       APP_ALTERNATE_NAME/STORE_* in client/src/config/appConfig.js. -->
+  <title>Amardeep Swarna Kala Kendra (Amardeep Jewellers) | Akbarpur, Ambedkar Nagar</title>
+  <meta name="description" content="Amardeep Swarna Kala Kendra - known locally as Amardeep Jewellers - Certified BIS hallmark gold & diamond jewellery in Akbarpur, Ambedkar Nagar, Uttar Pradesh. Free shipping across India." />
+  <link rel="canonical" href="https://amardeepshitalaprashad.com/" />
+
+  <meta property="og:site_name" content="Amardeep Swarna Kala Kendra" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="en_IN" />
+  <meta property="og:title" content="Amardeep Swarna Kala Kendra (Amardeep Jewellers) | Akbarpur, Ambedkar Nagar" />
+  <meta property="og:description" content="Certified BIS hallmark gold & diamond jewellery in Akbarpur, Ambedkar Nagar, Uttar Pradesh. Free shipping across India." />
+  <meta property="og:image" content="https://amardeepshitalaprashad.com/logo.jpg" />
+  <meta property="og:url" content="https://amardeepshitalaprashad.com/" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <script id="seo-json-ld" type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "JewelryStore",
+      "name": "Amardeep Swarna Kala Kendra",
+      "alternateName": ["Amardeep Jewellers", "ADSP"],
+      "url": "https://amardeepshitalaprashad.com",
+      "logo": "https://amardeepshitalaprashad.com/logo.jpg",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Akbarpur",
+        "addressRegion": "Uttar Pradesh",
+        "addressCountry": "IN"
+      }
+    }
+  </script>
 </head>
 
 <body>

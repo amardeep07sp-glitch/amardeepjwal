@@ -64,8 +64,7 @@ function SectionCard({ label, children }) {
 // A real navigation hub (matches how Myntra's own Profile tab works) - a
 // stat row + grouped links out to the pages that actually hold the detail
 // (Orders, Addresses, Wallet, Rewards), not a second copy of that content
-// embedded inline. AccountLayout's own mobile pill-nav is redundant here
-// since this page already links to every one of those destinations itself.
+// embedded inline.
 export default function ProfilePage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -117,7 +116,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <AccountLayout title="My Profile" subtitle="Manage your account and orders" icon={User} breadcrumbLabel="My Profile" hideMobileNav>
+    <AccountLayout title="My Profile" subtitle="Manage your account and orders" icon={User} breadcrumbLabel="My Profile">
       <div className="flex flex-col gap-5">
         <div className="rounded-2xl bg-card p-5 ring-1 ring-border sm:p-6">
           <div className="mb-4 flex items-start justify-between gap-3">
@@ -202,7 +201,12 @@ export default function ProfilePage() {
               </div>
             </form>
           ) : (
-            <div className="grid grid-cols-4 divide-x divide-border border-t border-border pt-1">
+            /* 2x2 below sm - four equal columns left "Wallet" (a real
+               currency string, e.g. "₹12,450") cramped/wrapping on a
+               360-390px phone. divide-x AND divide-y (not just divide-x)
+               so the grid still reads as one connected stat block at both
+               sizes, not four/two disconnected tiles. */
+            <div className="grid grid-cols-2 divide-x divide-y divide-border border-t border-border pt-1 sm:grid-cols-4 sm:divide-y-0">
               <StatTile label="Orders" value={orders?.meta.totalItems ?? 0} isLoading={ordersLoading} />
               <StatTile label="Wishlist" value={wishlist?.length ?? 0} isLoading={wishlistLoading} />
               <StatTile label="Addresses" value={addresses?.length ?? 0} isLoading={addressesLoading} />
@@ -222,7 +226,7 @@ export default function ProfilePage() {
 
         <SectionCard label="Support & More">
           <NavRow to="/contact" icon={MessageCircle} title="Contact Us" description="We're here to help" />
-          <NavRow to="/faqs" icon={LifeBuoy} title="FAQs" description="Find answers to common questions" />
+          <NavRow to="/help" icon={LifeBuoy} title="Help Center" description="Find answers to common questions" />
         </SectionCard>
       </div>
     </AccountLayout>

@@ -5,10 +5,12 @@ import {
   BadgeCheck,
   ChevronRight,
   Coins,
+  Gift,
   Grid2x2,
   Heart,
   HelpCircle,
   Layers,
+  LifeBuoy,
   Loader2,
   LogOut,
   Map,
@@ -85,13 +87,17 @@ function Row({ to, icon: Icon, label, badge, highlight, onClick }) {
 
 export function MobileMenu({ open, onOpenChange }) {
   const [isLocationOpen, setIsLocationOpen] = useState(false);
-  const { data: categories } = useNavbarCategories();
+  const { data: categories, isLoading: categoriesLoading } = useNavbarCategories();
   const { data: customItems } = usePublicNavbarItems();
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
   const { label: deliveryLabel, isDetecting } = useDeliveryLocation();
 
-  const activeCategories = (categories && categories.length > 0) ? categories : DEFAULT_CATEGORIES_FALLBACK;
+  // The loading-state placeholder only covers the brief window before the
+  // real list resolves - once it has (even to a genuinely empty array), that
+  // real result wins rather than showing 8 made-up categories forever (see
+  // CategoryNav.jsx's identical navCategories for the full reasoning).
+  const activeCategories = categoriesLoading ? DEFAULT_CATEGORIES_FALLBACK : (categories ?? []);
 
   return (
     <>
@@ -111,40 +117,69 @@ export function MobileMenu({ open, onOpenChange }) {
               className="w-full"
             />
 
-            {/* User Profile / Auth State */}
+            {/* User Profile / Auth State - theme tokens (bg-primary/text-
+                primary/text-heading/border-border), matching how ProfilePage
+                and AccountSidebar already render this exact same "gold
+                highlight" everywhere else - this card used to hardcode its
+                own slightly different gold hex (#D4AF37/#B88A2F) instead of
+                the theme's real --primary (#c8a24a), which is what made the
+                highlight color visibly shift the moment a tap here landed on
+                the real Profile/Orders page underneath. */}
             {user ? (
-              <div className="rounded-2xl border border-[#EFE7D8] bg-[#FFF9EF] p-3">
+              <div className="rounded-2xl bg-card p-3 ring-1 ring-border">
                 <SheetClose asChild>
                   <NavLink
                     to="/profile"
                     className="flex items-center gap-3"
                   >
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/25 text-sm font-bold text-[#8C6212] ring-1 ring-[#D4AF37]/40">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary ring-1 ring-primary/20">
                       {user.name.charAt(0).toUpperCase()}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-[#2A080C]">{user.name}</span>
-                      <span className="block text-xs text-[#8C8273]">View Account Profile</span>
+                      <span className="block truncate text-sm font-semibold text-heading">{user.name}</span>
+                      <span className="block text-xs text-muted-foreground">View Account Profile</span>
                     </div>
-                    <ChevronRight className="size-4 shrink-0 text-[#9E9584]" />
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                   </NavLink>
                 </SheetClose>
 
-                <div className="mt-3 grid grid-cols-2 gap-1.5 border-t border-[#EFE7D8] pt-2.5">
+                {/* Every AccountSidebar/ACCOUNT_NAV_ITEMS destination except
+                    Profile (the row above already opens it) and Wishlist
+                    (already in the drawer footer below) - this quick-link
+                    grid is the only mobile way to reach these account
+                    sections, since AccountLayout no longer repeats its own
+                    pill nav on every account page. */}
+                <div className="mt-3 grid grid-cols-2 gap-1.5 border-t border-border pt-2.5">
                   <SheetClose asChild>
                     <NavLink
                       to="/orders"
-                      className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-[#3F3A33] hover:bg-white"
+                      className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
                     >
-                      <Package className="size-3.5 text-[#B88A2F]" /> My Orders
+                      <Package className="size-3.5 text-primary" /> My Orders
+                    </NavLink>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <NavLink
+                      to="/rewards"
+                      className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+                    >
+                      <Gift className="size-3.5 text-primary" /> My Rewards
                     </NavLink>
                   </SheetClose>
                   <SheetClose asChild>
                     <NavLink
                       to="/addresses"
-                      className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-[#3F3A33] hover:bg-white"
+                      className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
                     >
-                      <MapPin className="size-3.5 text-[#B88A2F]" /> Addresses
+                      <MapPin className="size-3.5 text-primary" /> Addresses
+                    </NavLink>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <NavLink
+                      to="/support"
+                      className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+                    >
+                      <LifeBuoy className="size-3.5 text-primary" /> Help & Support
                     </NavLink>
                   </SheetClose>
                 </div>

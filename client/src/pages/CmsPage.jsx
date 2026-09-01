@@ -6,6 +6,8 @@ import { BackButton } from '@/components/global/BackButton';
 import { Breadcrumb } from '@/components/global/Breadcrumb';
 import { EmptyState } from '@/components/global/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useSeo } from '@/hooks/useSeo';
+import { APP_NAME, SITE_URL } from '@/config/appConfig';
 
 // The one destination every admin-created CMS page (Admin -> CMS -> Pages)
 // actually renders at - `content` is a plain Textarea field on the admin
@@ -14,6 +16,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function CmsPage() {
   const { slug } = useParams();
   const { data: page, isLoading, isError } = usePublicPage(slug);
+
+  useSeo({
+    title: page ? `${page.title} | ${APP_NAME}` : undefined,
+    description: page?.content ? `${page.content.slice(0, 155).trim()}...` : undefined,
+    canonical: slug ? `${SITE_URL}/pages/${slug}` : undefined,
+  });
 
   return (
     <PageContainer top="md" bottom="md">

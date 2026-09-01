@@ -61,6 +61,14 @@ const authFetch = async (path, body, accessToken) => {
   return data.data;
 };
 
+// See client/src/store/authStore.js's identical guard for the full
+// reasoning: refresh tokens rotate server-side, so several requests 401ing
+// at once would otherwise each spend the same now-single-use refresh
+// cookie independently - every one after the first gets "Invalid session"
+// back and wrongly signs the admin out. Caching the in-flight promise makes
+// every concurrent caller await the one real network call instead.
+let refreshPromise = null;
+
 export const useAuthStore = create((set, get) => ({
   user: null,
   accessToken: null,
@@ -82,12 +90,6 @@ export const useAuthStore = create((set, get) => ({
     return result;
   },
 
-  async register(payload) {
-    const result = await authFetch('/register', payload);
-    get().setSession(result);
-    return result;
-  },
-
   async logout() {
     try {
       await authFetch('/logout', undefined, get().accessToken);
@@ -97,14 +99,22 @@ export const useAuthStore = create((set, get) => ({
   },
 
   async refreshSession() {
-    try {
-      const result = await authFetch('/refresh-token');
-      get().setSession(result);
-      return true;
-    } catch {
-      get().clearSession();
-      return false;
-    }
+    if (refreshPromise) return refreshPromise;
+
+    refreshPromise = (async () => {
+      try {
+        const result = await authFetch('/refresh-token');
+        get().setSession(result);
+        return true;
+      } catch {
+        get().clearSession();
+        return false;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+
+    return refreshPromise;
   },
 
   async bootstrap() {

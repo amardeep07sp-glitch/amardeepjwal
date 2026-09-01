@@ -23,7 +23,11 @@ const POPULATE_FIELDS = [
 export const orderRepository = {
   async findPaginated({ page, limit, orderStatus, paymentStatus, source, warehouse, customer, dateFrom, dateTo, search, sortBy, sortOrder }) {
     const filter = {};
-    if (orderStatus) filter.orderStatus = orderStatus;
+    // storefront.validation.js's My Orders schema sends an array (a status
+    // "bucket" like Shipped covering shipped+partially_shipped+ready_to_ship
+    // in one filter) - the admin Orders list still sends a single raw
+    // status string, so both shapes have to keep working here.
+    if (orderStatus) filter.orderStatus = Array.isArray(orderStatus) ? { $in: orderStatus } : orderStatus;
     if (paymentStatus) filter.paymentStatus = paymentStatus;
     if (source) filter.source = source;
     if (warehouse) filter.warehouse = warehouse;
